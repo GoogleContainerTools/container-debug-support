@@ -360,7 +360,7 @@
           <consoleOutput>false</consoleOutput>
           <failOnViolation>true</failOnViolation>
           <violationSeverity>warning</violationSeverity>
-          <sourceDirectory>${project.build.sourceDirectory}</sourceDirectory>
+          <sourceDirectories>${project.build.sourceDirectory}</sourceDirectories>
         </configuration>
         <executions>
           <execution>
