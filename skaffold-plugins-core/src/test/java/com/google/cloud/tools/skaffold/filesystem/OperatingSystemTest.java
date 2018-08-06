@@ -31,9 +31,16 @@ public class OperatingSystemTest {
   }
 
   @Test
-  public void testMacOs() {
+  public void testMacOs_mac() {
     Properties fakeProperties = new Properties();
-    fakeProperties.setProperty("os.name", "os is mAc or DaRwIn");
+    fakeProperties.setProperty("os.name", "os is mAc");
+    Assert.assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
+  }
+
+  @Test
+  public void testMacOs_darwin() {
+    Properties fakeProperties = new Properties();
+    fakeProperties.setProperty("os.name", "os is DaRwIn");
     Assert.assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
   }
 
