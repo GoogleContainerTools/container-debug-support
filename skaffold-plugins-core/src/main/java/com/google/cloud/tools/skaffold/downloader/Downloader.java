@@ -18,8 +18,10 @@ package com.google.cloud.tools.skaffold.downloader;
 
 import java.io.IOException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.nio.channels.Channels;
 import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.file.Path;
 import java.nio.file.StandardOpenOption;
 
@@ -45,7 +47,15 @@ public class Downloader {
    * @throws IOException if an I/O exception occurred during the download process
    */
   public long download(Path destination) throws IOException {
-    return FileChannel.open(destination, StandardOpenOption.WRITE, StandardOpenOption.CREATE)
-        .transferFrom(Channels.newChannel(url.openStream()), 0, Long.MAX_VALUE);
+    URLConnection connection = url.openConnection();
+    try (FileChannel fileChannel =
+            FileChannel.open(destination, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
+        ReadableByteChannel urlChannel = Channels.newChannel(connection.getInputStream())) {
+      long totalSize = connection.getContentLengthLong();
+      for (long downloadedSize = 0L;
+          downloadedSize < totalSize;
+          downloadedSize += fileChannel.transferFrom(urlChannel, 0, Long.MAX_VALUE)) {}
+      return totalSize;
+    }
   }
 }
