@@ -40,7 +40,8 @@ public class DownloaderIntegationTest {
     Assert.assertTrue(temporaryFile.toFile().setExecutable(true));
 
     // Runs the downloaded script.
-    Process helloProcess = new ProcessBuilder(temporaryFile.toString()).start();
+    Process helloProcess =
+        new ProcessBuilder(System.getenv("SHELL"), temporaryFile.toString()).start();
     String stdout =
         CharStreams.toString(
             new InputStreamReader(helloProcess.getInputStream(), StandardCharsets.UTF_8));
