@@ -26,7 +26,7 @@ public enum OperatingSystem {
   WINDOWS;
 
   /**
-   * Resolves the operating system type. *
+   * Resolves the operating system type.
    *
    * @return the {@link OperatingSystem}
    */
