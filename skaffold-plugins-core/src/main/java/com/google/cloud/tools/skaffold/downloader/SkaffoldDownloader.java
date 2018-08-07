@@ -27,13 +27,30 @@ import java.nio.file.Path;
 public class SkaffoldDownloader {
 
   /**
-   * Obtains a new {@link SkaffoldDownloader} that downloads the latest {@code skaffold} release.
+   * Downloads the latest {@code skaffold} release.
    *
-   * @return the {@link SkaffoldDownloader} to perform the download
+   * @return {@code true} if the destination file could be set to executable; {@code false}
+   *     otherwise
    * @throws MalformedURLException if the URL to download from is malformed
    */
-  public static SkaffoldDownloader latest() throws MalformedURLException {
-    return new SkaffoldDownloader("latest", OperatingSystem.resolve());
+  public static boolean downloadLatest(Path destination) throws IOException {
+    return download(new URL(getUrl("latest", OperatingSystem.resolve())), destination);
+  }
+
+  /**
+   * Downloads to the {@code destination}.
+   *
+   * @param destination the destination file to download {@code skaffold} to
+   * @return {@code true} if the destination file could be set to executable; {@code false}
+   *     otherwise
+   * @throws IOException if an I/O exception occurs during download
+   */
+  @VisibleForTesting
+  static boolean download(URL url, Path destination) throws IOException {
+    if (Downloader.download(url, destination) == -1) {
+      throw new IOException("Could not get size of skaffold binary to download");
+    }
+    return destination.toFile().setExecutable(true);
   }
 
   /**
@@ -65,25 +82,5 @@ public class SkaffoldDownloader {
     }
   }
 
-  private final URL url;
-
-  private SkaffoldDownloader(String version, OperatingSystem operatingSystem)
-      throws MalformedURLException {
-    url = new URL(getUrl(version, operatingSystem));
-  }
-
-  /**
-   * Downloads to the {@code destination}.
-   *
-   * @param destination the destination file to download {@code skaffold} to
-   * @return {@code true} if the destination file could be set to executable; {@code false}
-   *     otherwise
-   * @throws IOException if an I/O exception occurs during download
-   */
-  public boolean download(Path destination) throws IOException {
-    if (Downloader.download(url, destination) == -1) {
-      throw new IOException("Could not get size of skaffold binary to download");
-    }
-    return destination.toFile().setExecutable(true);
-  }
+  private SkaffoldDownloader() {}
 }
