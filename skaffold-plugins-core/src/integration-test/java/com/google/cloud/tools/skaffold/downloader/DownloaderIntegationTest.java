@@ -48,6 +48,10 @@ public class DownloaderIntegationTest {
     String stdout =
         CharStreams.toString(
             new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+    String stderr =
+        CharStreams.toString(
+            new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+    Assert.assertEquals("", stderr);
     Assert.assertEquals(0, process.waitFor());
     return stdout;
   }
@@ -81,7 +85,6 @@ public class DownloaderIntegationTest {
         downloadAndRun(
             Resources.getResource("helloScript.bat"),
             temporaryFolder.newFolder().toPath().resolve("hello.bat"),
-            "cmd",
-            "/cq"));
+            "cmd", "/c", "/q"));
   }
 }
