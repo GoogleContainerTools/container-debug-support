@@ -16,51 +16,53 @@
 
 package com.google.cloud.tools.skaffold.filesystem;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.fail;
+
 import java.util.Properties;
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 
 /** Tests for {@link OperatingSystem}. */
-public class OperatingSystemTest {
+class OperatingSystemTest {
 
   @Test
-  public void testLinux() {
+  void testLinux() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("os.name", "os is LiNuX");
-    Assert.assertEquals(OperatingSystem.LINUX, OperatingSystem.resolve(fakeProperties));
+    assertEquals(OperatingSystem.LINUX, OperatingSystem.resolve(fakeProperties));
   }
 
   @Test
-  public void testMacOs_mac() {
+  void testMacOs_mac() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("os.name", "os is mAc");
-    Assert.assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
+    assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
   }
 
   @Test
-  public void testMacOs_darwin() {
+  void testMacOs_darwin() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("os.name", "os is DaRwIn");
-    Assert.assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
+    assertEquals(OperatingSystem.MAC_OS, OperatingSystem.resolve(fakeProperties));
   }
 
   @Test
-  public void testWindows() {
+  void testWindows() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("os.name", "os is WiNdOwS");
-    Assert.assertEquals(OperatingSystem.WINDOWS, OperatingSystem.resolve(fakeProperties));
+    assertEquals(OperatingSystem.WINDOWS, OperatingSystem.resolve(fakeProperties));
   }
 
   @Test
-  public void testUnknown() {
+  void testUnknown() {
     Properties fakeProperties = new Properties();
     fakeProperties.setProperty("os.name", "UnKnOwN");
     try {
       OperatingSystem.resolve(fakeProperties);
-      Assert.fail("Resolve should have failed");
+      fail("Resolve should have failed");
 
     } catch (IllegalStateException ex) {
-      Assert.assertEquals("Unknown OS: UnKnOwN", ex.getMessage());
+      assertEquals("Unknown OS: UnKnOwN", ex.getMessage());
     }
   }
 }
