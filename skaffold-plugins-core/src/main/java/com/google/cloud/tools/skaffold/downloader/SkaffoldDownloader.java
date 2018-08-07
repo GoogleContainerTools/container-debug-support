@@ -81,7 +81,9 @@ public class SkaffoldDownloader {
    * @throws IOException if an I/O exception occurs during download
    */
   public boolean download(Path destination) throws IOException {
-    new Downloader(url).download(destination);
+    if (Downloader.download(url, destination) == -1) {
+      throw new IOException("Could not get size of skaffold binary to download");
+    }
     return destination.toFile().setExecutable(true);
   }
 }
