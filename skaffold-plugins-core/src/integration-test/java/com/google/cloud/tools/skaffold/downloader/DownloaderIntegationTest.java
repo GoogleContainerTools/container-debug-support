@@ -57,7 +57,7 @@ public class DownloaderIntegationTest {
     return stdout;
   }
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testDownload() throws IOException, InterruptedException {
