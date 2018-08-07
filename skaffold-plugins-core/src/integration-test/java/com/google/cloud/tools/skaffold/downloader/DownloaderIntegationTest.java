@@ -27,7 +27,9 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Rule;
 import org.junit.Test;
 import org.junit.rules.TemporaryFolder;
@@ -38,7 +40,7 @@ public class DownloaderIntegationTest {
   private static String downloadAndRun(URL url, Path destination, String... command)
       throws IOException, InterruptedException {
     // Downloads a script that says "hello".
-    new Downloader(url).download(destination);
+    Downloader.download(url, destination, 1);
     Assert.assertTrue(destination.toFile().setExecutable(true));
 
     // Runs the downloaded script.
@@ -48,18 +50,19 @@ public class DownloaderIntegationTest {
     String stdout =
         CharStreams.toString(
             new InputStreamReader(process.getInputStream(), StandardCharsets.UTF_8));
+    String stderr =
+        CharStreams.toString(
+            new InputStreamReader(process.getErrorStream(), StandardCharsets.UTF_8));
+    Assert.assertEquals("", stderr);
     Assert.assertEquals(0, process.waitFor());
     return stdout;
   }
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
   public void testDownload() throws IOException, InterruptedException {
-    if (OperatingSystem.resolve() == OperatingSystem.WINDOWS) {
-      // Windows is tested in testDownload_windows.
-      return;
-    }
+    Assume.assumeTrue("non-Windows test", OperatingSystem.resolve() != OperatingSystem.WINDOWS);
 
     Assert.assertEquals(
         "hello\n",
@@ -71,16 +74,14 @@ public class DownloaderIntegationTest {
 
   @Test
   public void testDownload_windows() throws IOException, InterruptedException {
-    if (OperatingSystem.resolve() != OperatingSystem.WINDOWS) {
-      // Windows is tested in testDownload_windows.
-      return;
-    }
+    Assume.assumeTrue("Windows test", OperatingSystem.resolve() == OperatingSystem.WINDOWS);
 
-    Assert.assertEquals(
-        "hello\n",
+    Assert.assertThat(
         downloadAndRun(
             Resources.getResource("helloScript.bat"),
-            temporaryFolder.newFolder().toPath().resolve("hello.sh"),
-            "call"));
+            temporaryFolder.newFolder().toPath().resolve("hello.bat"),
+            "cmd",
+            "/c"),
+        CoreMatchers.containsString("hello world"));
   }
 }

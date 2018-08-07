@@ -16,7 +16,10 @@
 
 package com.google.cloud.tools.skaffold.downloader;
 
+import com.google.common.annotations.VisibleForTesting;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
@@ -28,34 +31,35 @@ import java.nio.file.StandardOpenOption;
 /** Downloads files. */
 public class Downloader {
 
-  private final URL url;
-
-  /**
-   * Instantiates with a {@link URL} to download from.
-   *
-   * @param url the {@link URL} to download
-   */
-  public Downloader(URL url) {
-    this.url = url;
-  }
-
   /**
    * Downloads to a destination file.
    *
+   * @param url the {@link URL} to download
    * @param destination the destination file to download to
-   * @return the size of the downloaded contents
+   * @return the size of the downloaded contents, or -1 if {@code Content-Length} is unknown and
+   *     thus nothing downloaded
    * @throws IOException if an I/O exception occurred during the download process
    */
-  public long download(Path destination) throws IOException {
+  public static long download(URL url, Path destination) throws IOException {
+    return download(url, destination, Long.MAX_VALUE);
+  }
+
+  @VisibleForTesting
+  static long download(URL url, Path destination, long chunkSize) throws IOException {
     URLConnection connection = url.openConnection();
     try (FileChannel fileChannel =
             FileChannel.open(destination, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-        ReadableByteChannel urlChannel = Channels.newChannel(connection.getInputStream())) {
+        InputStream connectionInputStream = new BufferedInputStream(connection.getInputStream());
+        ReadableByteChannel urlChannel = Channels.newChannel(connectionInputStream)) {
       long totalSize = connection.getContentLengthLong();
-      for (long downloadedSize = 0L;
-          downloadedSize < totalSize;
-          downloadedSize += fileChannel.transferFrom(urlChannel, 0, Long.MAX_VALUE)) {}
+      while (fileChannel.position() < totalSize) {
+        fileChannel.position(
+            fileChannel.position()
+                + fileChannel.transferFrom(urlChannel, fileChannel.position(), chunkSize));
+      }
       return totalSize;
     }
   }
+
+  private Downloader() {}
 }
