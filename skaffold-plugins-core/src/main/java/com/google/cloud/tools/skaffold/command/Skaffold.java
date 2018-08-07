@@ -43,6 +43,10 @@ public class Skaffold {
   private static final Path CACHED_SKAFFOLD_LOCATION =
       UserCacheHome.getCacheHome().resolve("skaffold");
 
+  /** The location to store the digest for {@code skaffold} if auto-downloading it. */
+  private static final Path CACHED_SKAFFOLD_DIGEST_LOCATION =
+      CACHED_SKAFFOLD_LOCATION.resolveSibling("skaffold.sha256");
+
   /**
    * Initializes {@link Skaffold} with a custom path to the {@code skaffold} executable.
    *
@@ -55,10 +59,15 @@ public class Skaffold {
 
   /**
    * Initializes {@link Skaffold} with a managed {@code skaffold} executable.
-   * @return
+   *
+   * @return a new {@link Skaffold}
    * @throws IOException
    */
   public static Skaffold init() throws IOException {
+    SkaffoldDownloader.downloadLatestDigest(Files.tem);
+
+    if ()
+
     SkaffoldDownloader.downloadLatest(CACHED_SKAFFOLD_LOCATION);
     return new Skaffold(CACHED_SKAFFOLD_LOCATION.toString());
   }
