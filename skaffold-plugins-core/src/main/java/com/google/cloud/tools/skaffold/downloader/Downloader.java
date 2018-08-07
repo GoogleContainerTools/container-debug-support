@@ -17,7 +17,9 @@
 package com.google.cloud.tools.skaffold.downloader;
 
 import com.google.common.annotations.VisibleForTesting;
+import java.io.BufferedInputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
 import java.nio.channels.Channels;
@@ -47,11 +49,14 @@ public class Downloader {
     URLConnection connection = url.openConnection();
     try (FileChannel fileChannel =
             FileChannel.open(destination, StandardOpenOption.WRITE, StandardOpenOption.CREATE);
-        ReadableByteChannel urlChannel = Channels.newChannel(connection.getInputStream())) {
+        InputStream connectionInputStream = new BufferedInputStream(connection.getInputStream());
+        ReadableByteChannel urlChannel = Channels.newChannel(connectionInputStream)) {
       long totalSize = connection.getContentLengthLong();
-      for (long downloadedSize = 0L;
-          downloadedSize < totalSize;
-          downloadedSize += fileChannel.transferFrom(urlChannel, downloadedSize, chunkSize)) {}
+      while (fileChannel.position() < totalSize) {
+        fileChannel.position(
+            fileChannel.position()
+                + fileChannel.transferFrom(urlChannel, fileChannel.position(), chunkSize));
+      }
       return totalSize;
     }
   }
