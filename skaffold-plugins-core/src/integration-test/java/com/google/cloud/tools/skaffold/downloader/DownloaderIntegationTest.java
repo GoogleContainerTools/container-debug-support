@@ -27,6 +27,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import org.hamcrest.CoreMatchers;
 import org.junit.Assert;
 import org.junit.Assume;
 import org.junit.Rule;
@@ -75,13 +76,12 @@ public class DownloaderIntegationTest {
   public void testDownload_windows() throws IOException, InterruptedException {
     Assume.assumeTrue("Windows test", OperatingSystem.resolve() == OperatingSystem.WINDOWS);
 
-    Assert.assertEquals(
-        "hello\n",
+    Assert.assertThat(
         downloadAndRun(
             Resources.getResource("helloScript.bat"),
             temporaryFolder.newFolder().toPath().resolve("hello.bat"),
             "cmd",
-            "/c",
-            "/q"));
+            "/c"),
+        CoreMatchers.containsString("hello world"));
   }
 }
