@@ -26,6 +26,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -61,15 +62,32 @@ public class Skaffold {
    * Initializes {@link Skaffold} with a managed {@code skaffold} executable.
    *
    * @return a new {@link Skaffold}
-   * @throws IOException
+   * @throws IOException if an I/O exception occurred
    */
   public static Skaffold init() throws IOException {
-    SkaffoldDownloader.downloadLatestDigest(Files.tem);
-
-    if ()
-
-    SkaffoldDownloader.downloadLatest(CACHED_SKAFFOLD_LOCATION);
+    ensureSkaffoldIsLatestVersion(CACHED_SKAFFOLD_LOCATION, CACHED_SKAFFOLD_DIGEST_LOCATION);
     return new Skaffold(CACHED_SKAFFOLD_LOCATION.toString());
+  }
+
+  @VisibleForTesting
+  static void ensureSkaffoldIsLatestVersion(
+      Path cachedSkaffoldLocation, Path cachedSkaffoldDigestLocation) throws IOException {
+    if (Files.exists(cachedSkaffoldLocation)) {
+      // Checks if the digest is up-to-date and redownloads skaffold if not.
+      Path temporaryDigestFile = Files.createTempFile("", "");
+      temporaryDigestFile.toFile().deleteOnExit();
+      SkaffoldDownloader.downloadLatestDigest(temporaryDigestFile);
+      byte[] latestDigest = Files.readAllBytes(temporaryDigestFile);
+      if (Files.exists(cachedSkaffoldDigestLocation)) {
+        byte[] storedDigest = Files.readAllBytes(cachedSkaffoldDigestLocation);
+        if (Arrays.equals(storedDigest, latestDigest)) {
+          return;
+        }
+      }
+      Files.write(cachedSkaffoldDigestLocation, latestDigest);
+    }
+
+    SkaffoldDownloader.downloadLatest(cachedSkaffoldLocation);
   }
 
   private static Callable<Void> redirect(InputStream inputStream, OutputStream outputStream) {
