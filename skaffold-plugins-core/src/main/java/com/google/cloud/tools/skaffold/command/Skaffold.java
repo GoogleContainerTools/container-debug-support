@@ -17,11 +17,12 @@
 package com.google.cloud.tools.skaffold.command;
 
 import com.google.cloud.tools.skaffold.downloader.SkaffoldDownloader;
+import com.google.cloud.tools.skaffold.filesystem.UserCacheHome;
+import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
-import com.google.common.util.concurrent.Futures;
+import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
-import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -29,38 +30,60 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.concurrent.Executor;
-import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
+import java.util.function.Function;
 import javax.annotation.Nullable;
 
 /** Runs {@code skaffold} commands. */
 public class Skaffold {
 
+  /** The location to store {@code skaffold} if auto-downloading it. */
+  private static final Path CACHED_SKAFFOLD_LOCATION =
+      UserCacheHome.getCacheHome().resolve("skaffold");
+
+  /**
+   * Initializes {@link Skaffold} with a custom path to the {@code skaffold} executable.
+   *
+   * @param executablePath the path to {@code skaffold}
+   * @return a new {@link Skaffold}
+   */
   public static Skaffold atPath(Path executablePath) {
-    return new Skaffold(executablePath);
+    return new Skaffold(executablePath.toString());
   }
 
-  public static Skaffold init() {
-    SkaffoldDownloader
-    return new Skaffold(executablePath);
+  /**
+   * Initializes {@link Skaffold} with a managed {@code skaffold} executable.
+   * @return
+   * @throws IOException
+   */
+  public static Skaffold init() throws IOException {
+    SkaffoldDownloader.downloadLatest(CACHED_SKAFFOLD_LOCATION);
+    return new Skaffold(CACHED_SKAFFOLD_LOCATION.toString());
   }
 
-  private final Path executablePath;
+  private static Callable<Void> redirect(InputStream inputStream, OutputStream outputStream) {
+    return () -> {
+      try (InputStream inputStream1 = inputStream) {
+        ByteStreams.copy(inputStream1, outputStream);
+      }
+      return null;
+    };
+  }
 
-  @Nullable
-  private Path skaffoldYaml;
-  @Nullable
-  private String profile;
-  @Nullable
-  private InputStream stdinInputStream;
-  @Nullable
-  private OutputStream stdoutOutputStream;
-  @Nullable
-  private OutputStream stderrOutputStream;
+  private final List<String> initialTokens;
 
-  private Skaffold(Path executablePath) {
-    this.executablePath = executablePath;
+  private Function<List<String>, ProcessBuilder> processBuilderFactory = ProcessBuilder::new;
+  @Nullable private Path skaffoldYaml;
+  @Nullable private String profile;
+  @Nullable private InputStream stdinInputStream;
+  @Nullable private OutputStream stdoutOutputStream;
+  @Nullable private OutputStream stderrOutputStream;
+
+  @VisibleForTesting
+  Skaffold(String... initialTokens) {
+    this.initialTokens = Arrays.asList(initialTokens);
   }
 
   public Skaffold setSkaffoldYaml(Path skaffoldYaml) {
@@ -106,13 +129,20 @@ public class Skaffold {
     return this;
   }
 
-  public int deploy() throws InterruptedException, IOException {
+  /**
+   * Calls {@code skaffold deploy}.
+   *
+   * @return the process exit code
+   * @throws InterruptedException if the process was interrupted during execution
+   * @throws IOException if an I/O exception occurred
+   */
+  public int deploy() throws InterruptedException, IOException, ExecutionException {
     List<String> command = new ArrayList<>();
-    command.add(executablePath.toString());
+    command.addAll(initialTokens);
     command.addAll(getFlags());
     command.add("deploy");
 
-    Process skaffoldProcess = new ProcessBuilder(command).start();
+    Process skaffoldProcess = processBuilderFactory.apply(command).start();
 
     if (stdinInputStream != null) {
       try (OutputStream stdin = skaffoldProcess.getOutputStream()) {
@@ -120,27 +150,31 @@ public class Skaffold {
       }
     }
 
-    ListeningExecutorService listeningExecutorService = MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    ListeningExecutorService listeningExecutorService =
+        MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
+    List<ListenableFuture<Void>> listenableFutures = new ArrayList<>();
+
     if (stdoutOutputStream != null) {
-      listeningExecutorService.submit(
-          () -> {
-            try (InputStream stdout = skaffoldProcess.getInputStream()) {
-              ByteStreams.copy(stdout, stdoutOutputStream);
-            }
-            return null;
-          });
+      listenableFutures.add(
+          listeningExecutorService.submit(
+              redirect(skaffoldProcess.getInputStream(), stdoutOutputStream)));
     }
     if (stderrOutputStream != null) {
-      listeningExecutorService.submit(
-          () -> {
-            try (InputStream stderr = skaffoldProcess.getErrorStream()) {
-              ByteStreams.copy(stderr, stderrOutputStream);
-            }
-            return null;
-          });
+      listenableFutures.add(
+          listeningExecutorService.submit(
+              redirect(skaffoldProcess.getErrorStream(), stderrOutputStream)));
+    }
+
+    for (ListenableFuture<Void> listenableFuture : listenableFutures) {
+      listenableFuture.get();
     }
 
     return skaffoldProcess.waitFor();
+  }
+
+  Skaffold setProcessBuilderFactory(Function<List<String>, ProcessBuilder> processBuilderFactory) {
+    this.processBuilderFactory = processBuilderFactory;
+    return this;
   }
 
   private List<String> getFlags() {
@@ -148,6 +182,10 @@ public class Skaffold {
     if (skaffoldYaml != null) {
       flags.add("--filename");
       flags.add(skaffoldYaml.toString());
+    }
+    if (profile != null) {
+      flags.add("--profile");
+      flags.add(profile);
     }
     return flags;
   }
