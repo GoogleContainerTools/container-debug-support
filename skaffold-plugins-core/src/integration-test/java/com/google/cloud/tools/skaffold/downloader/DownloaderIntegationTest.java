@@ -80,7 +80,7 @@ public class DownloaderIntegationTest {
         "hello\n",
         downloadAndRun(
             Resources.getResource("helloScript.bat"),
-            temporaryFolder.newFolder().toPath().resolve("hello.sh"),
-            "call"));
+            temporaryFolder.newFolder().toPath().resolve("hello.bat"),
+            "cmd"));
   }
 }
