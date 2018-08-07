@@ -17,7 +17,12 @@
 package com.google.cloud.tools.skaffold.downloader;
 
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import javax.xml.bind.DatatypeConverter;
 import org.junit.Assert;
 import org.junit.Rule;
 import org.junit.Test;
@@ -29,10 +34,25 @@ public class SkaffoldDownloaderIntegrationTest {
   @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Test
-  public void testDownloadLatest() throws IOException, InterruptedException {
+  public void testDownloadLatest()
+      throws IOException, InterruptedException, NoSuchAlgorithmException {
     Path temporarySkaffoldExecutable = temporaryFolder.newFile().toPath();
     Assert.assertTrue(SkaffoldDownloader.downloadLatest(temporarySkaffoldExecutable));
     Process skaffoldProcess = new ProcessBuilder(temporarySkaffoldExecutable.toString()).start();
     Assert.assertEquals(0, skaffoldProcess.waitFor());
+
+    // Downloads and checks that the digest matches.
+    Path temporarySkaffoldExecutableDigest = temporaryFolder.newFile().toPath();
+    SkaffoldDownloader.downloadLatestDigest(temporarySkaffoldExecutableDigest);
+
+    MessageDigest messageDigest = MessageDigest.getInstance("SHA-256");
+    byte[] expectedDigest = messageDigest.digest(Files.readAllBytes(temporarySkaffoldExecutable));
+
+    String receivedDigestHex =
+        new String(Files.readAllBytes(temporarySkaffoldExecutableDigest), StandardCharsets.UTF_8)
+            .substring(0, 64);
+    byte[] receivedDigest = DatatypeConverter.parseHexBinary(receivedDigestHex);
+
+    Assert.assertArrayEquals(expectedDigest, receivedDigest);
   }
 }

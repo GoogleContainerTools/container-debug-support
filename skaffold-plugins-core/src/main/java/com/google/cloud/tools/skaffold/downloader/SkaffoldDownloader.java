@@ -34,23 +34,34 @@ public class SkaffoldDownloader {
    * @throws MalformedURLException if the URL to download from is malformed
    */
   public static boolean downloadLatest(Path destination) throws IOException {
-    return download(new URL(getUrl("latest", OperatingSystem.resolve())), destination);
+    download(getLatestUrl(""), destination);
+    return destination.toFile().setExecutable(true);
+  }
+
+  /**
+   * Downloads the latest {@code skaffold} release digest.
+   *
+   * @throws MalformedURLException if the URL to download from is malformed
+   */
+  public static void downloadLatestDigest(Path destination) throws IOException {
+    download(getLatestUrl(".sha256"), destination);
+  }
+
+  private static URL getLatestUrl(String suffix) throws MalformedURLException {
+    return new URL(getUrl("latest", OperatingSystem.resolve()) + suffix);
   }
 
   /**
    * Downloads to the {@code destination}.
    *
    * @param destination the destination file to download {@code skaffold} to
-   * @return {@code true} if the destination file could be set to executable; {@code false}
-   *     otherwise
    * @throws IOException if an I/O exception occurs during download
    */
   @VisibleForTesting
-  static boolean download(URL url, Path destination) throws IOException {
+  static void download(URL url, Path destination) throws IOException {
     if (Downloader.download(url, destination) == -1) {
       throw new IOException("Could not get size of skaffold binary to download");
     }
-    return destination.toFile().setExecutable(true);
   }
 
   /**
