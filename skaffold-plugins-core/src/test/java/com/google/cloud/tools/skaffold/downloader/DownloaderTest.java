@@ -21,7 +21,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URL;
 import java.net.URLConnection;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import org.junit.Assert;
@@ -37,7 +36,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class DownloaderTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   @Mock private URL mockURL;
   @Mock private URLConnection mockURLConnection;
@@ -53,18 +52,15 @@ public class DownloaderTest {
   }
 
   private void downloadToFile(Path destination) throws IOException {
-    String expectedDownloadContents = "downloaded file contents";
-    long expectedSize = expectedDownloadContents.getBytes(StandardCharsets.UTF_8).length;
-    InputStream fakeInputStream =
-        new ByteArrayInputStream(expectedDownloadContents.getBytes(StandardCharsets.UTF_8));
+    byte[] expectedDownloadContents = new byte[] {0x11, 0x22, 0x33, 0x44, 0x55};
+    long expectedSize = expectedDownloadContents.length;
+    InputStream fakeInputStream = new ByteArrayInputStream(expectedDownloadContents);
     Mockito.when(mockURL.openConnection()).thenReturn(mockURLConnection);
     Mockito.when(mockURLConnection.getInputStream()).thenReturn(fakeInputStream);
     Mockito.when(mockURLConnection.getContentLengthLong()).thenReturn(expectedSize);
 
-    long size = new Downloader(mockURL).download(destination);
+    long size = Downloader.download(mockURL, destination, 1);
     Assert.assertEquals(expectedSize, size);
-    Assert.assertEquals(
-        expectedDownloadContents,
-        new String(Files.readAllBytes(destination), StandardCharsets.UTF_8));
+    Assert.assertArrayEquals(expectedDownloadContents, Files.readAllBytes(destination));
   }
 }
