@@ -31,7 +31,7 @@ public class SkaffoldDownloaderIntegrationTest {
   @Test
   public void testDownloadLatest() throws IOException, InterruptedException {
     Path temporarySkaffoldExecutable = temporaryFolder.newFile().toPath();
-    Assert.assertTrue(SkaffoldDownloader.latest().download(temporarySkaffoldExecutable));
+    Assert.assertTrue(SkaffoldDownloader.downloadLatest(temporarySkaffoldExecutable));
     Process skaffoldProcess = new ProcessBuilder(temporarySkaffoldExecutable.toString()).start();
     Assert.assertEquals(0, skaffoldProcess.waitFor());
   }
