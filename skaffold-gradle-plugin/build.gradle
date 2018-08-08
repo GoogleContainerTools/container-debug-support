@@ -1,19 +1,19 @@
 plugins {
     id 'java-gradle-plugin'
     id 'checkstyle'
-    id 'com.github.sherter.google-java-format' version '0.6'
+    id 'com.github.sherter.google-java-format' version '0.7.1'
 
     // For local install
     id 'maven'
 
     // Error-prone checker
-    id 'net.ltgt.apt' version '0.15'
-    id 'net.ltgt.errorprone' version '0.0.14'
+    id 'net.ltgt.apt' version '0.18'
+    id 'net.ltgt.errorprone' version '0.0.16'
 
     // Prepare release
-    id 'net.researchgate.release' version '2.6.0'
+    id 'net.researchgate.release' version '2.7.0'
     // Gradle Plugin Portal publish
-    id 'com.gradle.plugin-publish' version '0.9.10'
+    id 'com.gradle.plugin-publish' version '0.10.0'
 }
 
 group 'com.google.cloud.tools'
@@ -56,20 +56,20 @@ configurations {
 
 dependencies {
     // These are copied over from skaffold-plugins-core and are necessary for the skaffold-plugins-core sourcesets.
-    compile 'com.google.guava:guava:23.6.1-jre'
+    compile 'com.google.guava:guava:26.0-jre'
 
     testCompile 'junit:junit:4.12'
-    testCompile 'org.mockito:mockito-core:2.18.3'
+    testCompile 'org.mockito:mockito-core:2.21.0'
 
     compile gradleApi()
 
     // NullAway errorprone plugin
-    annotationProcessor 'com.uber.nullaway:nullaway:0.4.6'
+    annotationProcessor 'com.uber.nullaway:nullaway:0.5.2'
     errorprone 'com.google.errorprone:error_prone_core:2.3.1'
 }
 
 task wrapper(type: Wrapper) {
-    gradleVersion = '4.8'
+    gradleVersion = '4.9'
 }
 
 // Integration tests must be run explicitly
@@ -106,7 +106,7 @@ check.dependsOn verifyGoogleJavaFormat
 
 /* CHECKSTYLE */
 checkstyle {
-    toolVersion = '8.10.1'
+    toolVersion = '8.11'
 
     // get the google_checks.xml file from the checkstyle jar and take out the java checks
     def googleChecks = resources.text.fromArchiveEntry(configurations.checkstyle[0], 'google_checks.xml').asString()
