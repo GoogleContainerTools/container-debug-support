@@ -67,9 +67,9 @@ public class SkaffoldTest {
 
     Assert.assertEquals(0, exitCode);
     Assert.assertEquals(
-        "input\noutput\n", new String(stdoutOutputStream.toByteArray(), StandardCharsets.UTF_8));
+        "input\r\noutput\r\n", new String(stdoutOutputStream.toByteArray(), StandardCharsets.UTF_8));
     Assert.assertEquals(
-        "error\n", new String(stderrOutputStream.toByteArray(), StandardCharsets.UTF_8));
+        "error\r\n", new String(stderrOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test
