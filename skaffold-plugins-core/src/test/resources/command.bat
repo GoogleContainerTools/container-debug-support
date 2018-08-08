@@ -9,6 +9,6 @@ for /F "tokens=*" %%a in ('findstr /n $') do (
   endlocal
 )
 
-echo "output"
+echo output
 
-echo "error" 1>&2
+echo error 1>&2
