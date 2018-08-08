@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.skaffold.command;
 
+import com.google.cloud.tools.skaffold.filesystem.OperatingSystem;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -23,11 +24,13 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.ExecutionException;
 import org.junit.Assert;
+import org.junit.Assume;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.mockito.junit.MockitoJUnitRunner;
@@ -36,29 +39,24 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SkaffoldTest {
 
-  @Test
-  public void testDeploy()
-      throws URISyntaxException, IOException, InterruptedException, ExecutionException {
-    Path executable = Paths.get(Resources.getResource("command.sh").toURI());
+  private static void verifyDeploy(String... command)
+      throws InterruptedException, ExecutionException, IOException {
     InputStream stdinInputStream =
         new ByteArrayInputStream("input".getBytes(StandardCharsets.UTF_8));
     ByteArrayOutputStream stdoutOutputStream = new ByteArrayOutputStream();
     ByteArrayOutputStream stderrOutputStream = new ByteArrayOutputStream();
 
+    List<String> expectedCommandList = new ArrayList<>();
+    expectedCommandList.addAll(Arrays.asList(command));
+    expectedCommandList.addAll(
+        Arrays.asList("--filename", "skaffoldYaml", "--profile", "profile", "deploy"));
+
     int exitCode =
-        new Skaffold(executable.toString())
+        new Skaffold(command)
             .setProcessBuilderFactory(
-                command -> {
-                  Assert.assertEquals(
-                      Arrays.asList(
-                          executable.toString(),
-                          "--filename",
-                          "skaffoldYaml",
-                          "--profile",
-                          "profile",
-                          "deploy"),
-                      command);
-                  return new ProcessBuilder(command);
+                commandList -> {
+                  Assert.assertEquals(expectedCommandList, commandList);
+                  return new ProcessBuilder(commandList);
                 })
             .setSkaffoldYaml(Paths.get("skaffoldYaml"))
             .setProfile("profile")
@@ -72,5 +70,19 @@ public class SkaffoldTest {
         "input\noutput\n", new String(stdoutOutputStream.toByteArray(), StandardCharsets.UTF_8));
     Assert.assertEquals(
         "error\n", new String(stderrOutputStream.toByteArray(), StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testDeploy()
+      throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    Assume.assumeTrue("non-Windows test", OperatingSystem.resolve() != OperatingSystem.WINDOWS);
+    verifyDeploy(Paths.get(Resources.getResource("command.sh").toURI()).toString());
+  }
+
+  @Test
+  public void testDeploy_windows()
+      throws URISyntaxException, IOException, InterruptedException, ExecutionException {
+    Assume.assumeTrue("Windows test", OperatingSystem.resolve() == OperatingSystem.WINDOWS);
+    verifyDeploy("cmd", "/c", Paths.get(Resources.getResource("command.bat").toURI()).toString());
   }
 }
