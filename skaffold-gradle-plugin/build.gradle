@@ -58,8 +58,7 @@ dependencies {
     // These are copied over from skaffold-plugins-core and are necessary for the skaffold-plugins-core sourcesets.
     compile 'com.google.guava:guava:26.0-jre'
 
-    testCompile 'org.junit.jupiter:junit-jupiter-api:5.2.0'
-    testCompile 'org.junit.jupiter:junit-jupiter-migrationsupport:5.2.0'
+    testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.21.0'
 
     compile gradleApi()
