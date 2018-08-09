@@ -21,7 +21,11 @@ import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.attribute.PosixFilePermission;
+import java.util.HashSet;
+import java.util.Set;
 
 /** Downloads {@code skaffold} executable. */
 public class SkaffoldDownloader {
@@ -29,28 +33,35 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release.
    *
-   * @return {@code true} if the destination file could be set to executable; {@code false}
-   *     otherwise
+   * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
-  public static boolean downloadLatest(Path destination) throws IOException {
-    return download(new URL(getUrl("latest", OperatingSystem.resolve())), destination);
+  public static void downloadLatest(Path destination) throws IOException {
+    download(new URL(getUrl("latest", OperatingSystem.resolve())), destination);
   }
 
   /**
    * Downloads to the {@code destination}.
    *
    * @param destination the destination file to download {@code skaffold} to
-   * @return {@code true} if the destination file could be set to executable; {@code false}
-   *     otherwise
    * @throws IOException if an I/O exception occurs during download
    */
   @VisibleForTesting
-  static boolean download(URL url, Path destination) throws IOException {
+  static void download(URL url, Path destination) throws IOException {
     if (Downloader.download(url, destination) == -1) {
       throw new IOException("Could not get size of skaffold binary to download");
     }
-    return destination.toFile().setExecutable(true);
+
+    // Makes skaffold executable.
+    OperatingSystem os = OperatingSystem.resolve();
+    if (os == OperatingSystem.LINUX || os == OperatingSystem.MAC_OS) {
+      Set<PosixFilePermission> executableFilePermissions =
+          new HashSet<>(Files.getPosixFilePermissions(destination));
+      executableFilePermissions.add(PosixFilePermission.OWNER_EXECUTE);
+      executableFilePermissions.add(PosixFilePermission.GROUP_EXECUTE);
+      executableFilePermissions.add(PosixFilePermission.OTHERS_EXECUTE);
+      Files.setPosixFilePermissions(destination, executableFilePermissions);
+    }
   }
 
   /**
