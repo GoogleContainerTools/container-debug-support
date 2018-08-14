@@ -25,20 +25,19 @@ import org.junit.Test;
 /** Tests for {@link SkaffoldYamlGenerator}. */
 public class SkaffoldYamlGeneratorTest {
 
-  private static final String EXPECTED_OUTPUT =
-      "apiVersion: skaffold/v1alpha2\n"
-          + "kind: Config\n"
-          + "deploy:\n"
-          + "  kubectl:\n"
-          + "    manifests:\n"
-          + "    - MANIFEST_PATH_1\n"
-          + "    - MANIFEST_PATH_2\n";
-
   @Test
   public void testGenerate() {
     ImmutableList<Path> paths =
         ImmutableList.of(Paths.get("MANIFEST_PATH_1"), Paths.get("MANIFEST_PATH_2"));
     SkaffoldYamlGenerator generator = new SkaffoldYamlGenerator(paths);
-    Assert.assertEquals(EXPECTED_OUTPUT, generator.generate());
+    Assert.assertEquals(
+        "apiVersion: skaffold/v1alpha2\n"
+            + "kind: Config\n"
+            + "deploy:\n"
+            + "  kubectl:\n"
+            + "    manifests:\n"
+            + "    - MANIFEST_PATH_1\n"
+            + "    - MANIFEST_PATH_2\n",
+        generator.generate());
   }
 }
