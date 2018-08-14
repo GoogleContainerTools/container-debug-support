@@ -39,7 +39,7 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SkaffoldTest {
 
-  private static void verifyDeploy(String... command)
+  private static void verifyDeploy(String expectedStdout, String expectedStderr, String... command)
       throws InterruptedException, ExecutionException, IOException {
     InputStream stdinInputStream =
         new ByteArrayInputStream("input".getBytes(StandardCharsets.UTF_8));
@@ -67,23 +67,30 @@ public class SkaffoldTest {
 
     Assert.assertEquals(0, exitCode);
     Assert.assertEquals(
-        "input\r\noutput\r\n",
-        new String(stdoutOutputStream.toByteArray(), StandardCharsets.UTF_8));
+        expectedStdout, new String(stdoutOutputStream.toByteArray(), StandardCharsets.UTF_8));
     Assert.assertEquals(
-        "error\r\n", new String(stderrOutputStream.toByteArray(), StandardCharsets.UTF_8));
+        expectedStderr, new String(stderrOutputStream.toByteArray(), StandardCharsets.UTF_8));
   }
 
   @Test
   public void testDeploy()
       throws URISyntaxException, IOException, InterruptedException, ExecutionException {
     Assume.assumeTrue("non-Windows test", OperatingSystem.resolve() != OperatingSystem.WINDOWS);
-    verifyDeploy(Paths.get(Resources.getResource("command.sh").toURI()).toString());
+    verifyDeploy(
+        "input\noutput\n",
+        "error\n",
+        Paths.get(Resources.getResource("command.sh").toURI()).toString());
   }
 
   @Test
   public void testDeploy_windows()
       throws URISyntaxException, IOException, InterruptedException, ExecutionException {
     Assume.assumeTrue("Windows test", OperatingSystem.resolve() == OperatingSystem.WINDOWS);
-    verifyDeploy("cmd", "/c", Paths.get(Resources.getResource("command.bat").toURI()).toString());
+    verifyDeploy(
+        "input\r\noutput\r\n",
+        "error\r\n",
+        "cmd",
+        "/c",
+        Paths.get(Resources.getResource("command.bat").toURI()).toString());
   }
 }
