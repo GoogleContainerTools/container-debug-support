@@ -23,7 +23,7 @@ import java.nio.file.Path;
 /** Automatically generates contents of a skaffold.yaml. */
 public class SkaffoldYamlGenerator {
 
-  private ImmutableList<Path> manifestPaths;
+  private final ImmutableList<Path> manifestPaths;
 
   /**
    * Creates a new {@link SkaffoldYamlGenerator}.

@@ -17,6 +17,11 @@
 package com.google.cloud.tools.skaffold.yaml;
 
 import com.google.common.collect.ImmutableList;
+import com.google.common.io.Resources;
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import org.junit.Assert;
@@ -26,18 +31,14 @@ import org.junit.Test;
 public class SkaffoldYamlGeneratorTest {
 
   @Test
-  public void testGenerate() {
+  public void testGenerate() throws URISyntaxException, IOException {
+    String expected =
+        new String(
+            Files.readAllBytes(Paths.get(Resources.getResource("yaml/test-skaffold.yaml").toURI())),
+            StandardCharsets.UTF_8);
     ImmutableList<Path> paths =
         ImmutableList.of(Paths.get("MANIFEST_PATH_1"), Paths.get("MANIFEST_PATH_2"));
     SkaffoldYamlGenerator generator = new SkaffoldYamlGenerator(paths);
-    Assert.assertEquals(
-        "apiVersion: skaffold/v1alpha2\n"
-            + "kind: Config\n"
-            + "deploy:\n"
-            + "  kubectl:\n"
-            + "    manifests:\n"
-            + "    - MANIFEST_PATH_1\n"
-            + "    - MANIFEST_PATH_2\n",
-        generator.generate());
+    Assert.assertEquals(expected, generator.generate());
   }
 }
