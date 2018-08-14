@@ -18,21 +18,20 @@ package com.google.cloud.tools.skaffold.yaml;
 
 import com.google.common.base.Preconditions;
 import com.google.common.collect.ImmutableList;
-import java.nio.file.Path;
 
 /**
  * Automatically generates contents of a skaffold.yaml from a provided set of Kubernetes manifests.
  */
 public class SkaffoldYamlGenerator {
 
-  private final ImmutableList<Path> manifestPaths;
+  private final ImmutableList<String> manifestPaths;
 
   /**
    * Creates a new {@link SkaffoldYamlGenerator}.
    *
-   * @param manifestPaths a non-empty list of paths to kubernetes yamls.
+   * @param manifestPaths a non-empty list of paths to Kubernetes yamls (may include glob patterns)
    */
-  public SkaffoldYamlGenerator(ImmutableList<Path> manifestPaths) {
+  public SkaffoldYamlGenerator(ImmutableList<String> manifestPaths) {
     Preconditions.checkArgument(manifestPaths.size() > 0);
     this.manifestPaths = manifestPaths;
   }
@@ -51,9 +50,9 @@ public class SkaffoldYamlGenerator {
 
     // Add manifests
     output.append("    manifests:\n");
-    for (Path manifestPath : manifestPaths) {
+    for (String manifestPath : manifestPaths) {
       output.append("    - ");
-      output.append(manifestPath.toString());
+      output.append(manifestPath);
       output.append("\n");
     }
 
