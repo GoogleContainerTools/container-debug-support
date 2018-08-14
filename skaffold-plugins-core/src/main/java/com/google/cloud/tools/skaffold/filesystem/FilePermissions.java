@@ -22,7 +22,7 @@ import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
 
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
-import java.nio.file.FileSystems;
+import java.nio.file.FileSystem;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.attribute.PosixFilePermission;
@@ -54,8 +54,8 @@ public class FilePermissions {
   }
 
   @VisibleForTesting
-  public static boolean isFilesystemPosix() {
-    return FileSystems.getDefault().supportedFileAttributeViews().contains("posix");
+  public static boolean isFilesystemPosix(FileSystem filesystem) {
+    return filesystem.supportedFileAttributeViews().contains("posix");
   }
 
   private FilePermissions() {}

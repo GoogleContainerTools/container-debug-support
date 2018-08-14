@@ -36,6 +36,7 @@ configurations {
 dependencies {
     // Make sure these are consistent with skaffold-maven-plugin and skaffold-gradle-plugin.
     compile 'com.google.guava:guava:26.0-jre'
+    compile 'org.slf4j:slf4j-api:1.7.25'
 
     testCompile 'junit:junit:4.12'
     testCompile 'org.mockito:mockito-core:2.21.0'

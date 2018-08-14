@@ -11,4 +11,4 @@ for /F "tokens=*" %%a in ('findstr /n $') do (
 
 echo output
 
-echo error 1>&2
+>&2 echo error

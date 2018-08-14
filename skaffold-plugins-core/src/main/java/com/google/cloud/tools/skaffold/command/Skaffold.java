@@ -33,12 +33,18 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.Function;
+import java.util.function.Supplier;
 import javax.annotation.Nullable;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /** Runs {@code skaffold} commands. */
 public class Skaffold {
+
+  private static final Logger logger = LoggerFactory.getLogger(Skaffold.class);
 
   /** The location to store {@code skaffold} if auto-downloading it. */
   private static final Path CACHED_SKAFFOLD_LOCATION =
@@ -48,6 +54,9 @@ public class Skaffold {
   private static final Path CACHED_SKAFFOLD_DIGEST_LOCATION =
       CACHED_SKAFFOLD_LOCATION.resolveSibling("skaffold.sha256");
 
+  @VisibleForTesting
+  static Supplier<ExecutorService> executorServiceSupplier = Executors::newCachedThreadPool;
+
   /**
    * Initializes {@link Skaffold} with a custom path to the {@code skaffold} executable.
    *
@@ -55,7 +64,7 @@ public class Skaffold {
    * @return a new {@link Skaffold}
    */
   public static Skaffold atPath(Path executablePath) {
-    return new Skaffold(executablePath.toString());
+    return new Skaffold(getListeningExecutorService(), executablePath.toString());
   }
 
   /**
@@ -66,9 +75,20 @@ public class Skaffold {
    */
   public static Skaffold init() throws IOException {
     ensureSkaffoldIsLatestVersion(CACHED_SKAFFOLD_LOCATION, CACHED_SKAFFOLD_DIGEST_LOCATION);
-    return new Skaffold(CACHED_SKAFFOLD_LOCATION.toString());
+    return new Skaffold(getListeningExecutorService(), CACHED_SKAFFOLD_LOCATION.toString());
   }
 
+  /**
+   * Sets the {@link ExecutorService} to handle the {@code skaffold} process. Uses {@link
+   * Executors#newCachedThreadPool} by default.
+   *
+   * @param executorService the executor
+   */
+  public static void setExecutorService(ExecutorService executorService) {
+    Skaffold.executorServiceSupplier = () -> executorService;
+  }
+
+  // TODO: Break out into separate skaffold auto-manager class.
   @VisibleForTesting
   static void ensureSkaffoldIsLatestVersion(
       Path cachedSkaffoldLocation, Path cachedSkaffoldDigestLocation) throws IOException {
@@ -76,29 +96,45 @@ public class Skaffold {
       // Checks if the digest is up-to-date and redownloads skaffold if not.
       Path temporaryDigestFile = Files.createTempFile("", "");
       temporaryDigestFile.toFile().deleteOnExit();
+      if (logger.isDebugEnabled()) {
+        logger.debug("Downloading latest skaffold release digest");
+      }
       SkaffoldDownloader.downloadLatestDigest(temporaryDigestFile);
       byte[] latestDigest = Files.readAllBytes(temporaryDigestFile);
       if (Files.exists(cachedSkaffoldDigestLocation)) {
         byte[] storedDigest = Files.readAllBytes(cachedSkaffoldDigestLocation);
         if (Arrays.equals(storedDigest, latestDigest)) {
+          if (logger.isDebugEnabled()) {
+            logger.debug("Cached skaffold is latest version");
+          }
           return;
         }
+      }
+      if (logger.isDebugEnabled()) {
+        logger.debug("Cached skaffold is outdated");
       }
       Files.write(cachedSkaffoldDigestLocation, latestDigest);
     }
 
+    if (logger.isDebugEnabled()) {
+      logger.debug("Downloading latest skaffold release");
+    }
     SkaffoldDownloader.downloadLatest(cachedSkaffoldLocation);
+  }
+
+  @VisibleForTesting
+  static ListeningExecutorService getListeningExecutorService() {
+    return MoreExecutors.listeningDecorator(Skaffold.executorServiceSupplier.get());
   }
 
   private static Callable<Void> redirect(InputStream inputStream, OutputStream outputStream) {
     return () -> {
-      try (InputStream inputStream1 = inputStream) {
-        ByteStreams.copy(inputStream1, outputStream);
-      }
+      ByteStreams.copy(inputStream, outputStream);
       return null;
     };
   }
 
+  private final ListeningExecutorService listeningExecutorService;
   private final List<String> initialTokens;
 
   private Function<List<String>, ProcessBuilder> processBuilderFactory = ProcessBuilder::new;
@@ -109,7 +145,8 @@ public class Skaffold {
   @Nullable private OutputStream stderrOutputStream;
 
   @VisibleForTesting
-  Skaffold(String... initialTokens) {
+  Skaffold(ListeningExecutorService listeningExecutorService, String... initialTokens) {
+    this.listeningExecutorService = listeningExecutorService;
     this.initialTokens = Arrays.asList(initialTokens);
   }
 
@@ -129,7 +166,7 @@ public class Skaffold {
    * @param stdinInputStream provides the stdin
    * @return this
    */
-  public Skaffold setStdinInputStream(InputStream stdinInputStream) {
+  public Skaffold redirectToStdin(InputStream stdinInputStream) {
     this.stdinInputStream = stdinInputStream;
     return this;
   }
@@ -140,7 +177,7 @@ public class Skaffold {
    * @param stdoutOutputStream receives the stdout
    * @return this
    */
-  public Skaffold setStdoutOutputStream(OutputStream stdoutOutputStream) {
+  public Skaffold redirectStdoutTo(OutputStream stdoutOutputStream) {
     this.stdoutOutputStream = stdoutOutputStream;
     return this;
   }
@@ -151,7 +188,7 @@ public class Skaffold {
    * @param stderrOutputStream receives the stderr
    * @return this
    */
-  public Skaffold setStderrOutputStream(OutputStream stderrOutputStream) {
+  public Skaffold redirectStderrTo(OutputStream stderrOutputStream) {
     this.stderrOutputStream = stderrOutputStream;
     return this;
   }
@@ -177,28 +214,28 @@ public class Skaffold {
       }
     }
 
-    ListeningExecutorService listeningExecutorService =
-        MoreExecutors.listeningDecorator(Executors.newCachedThreadPool());
     List<ListenableFuture<Void>> listenableFutures = new ArrayList<>();
 
-    if (stdoutOutputStream != null) {
-      listenableFutures.add(
-          listeningExecutorService.submit(
-              redirect(skaffoldProcess.getInputStream(), stdoutOutputStream)));
-    }
-    if (stderrOutputStream != null) {
-      listenableFutures.add(
-          listeningExecutorService.submit(
-              redirect(skaffoldProcess.getErrorStream(), stderrOutputStream)));
-    }
+    try (InputStream stdout = skaffoldProcess.getInputStream();
+        InputStream stderr = skaffoldProcess.getErrorStream()) {
+      if (stdoutOutputStream != null) {
+        listenableFutures.add(
+            listeningExecutorService.submit(redirect(stdout, stdoutOutputStream)));
+      }
+      if (stderrOutputStream != null) {
+        listenableFutures.add(
+            listeningExecutorService.submit(redirect(stderr, stderrOutputStream)));
+      }
 
-    for (ListenableFuture<Void> listenableFuture : listenableFutures) {
-      listenableFuture.get();
+      for (ListenableFuture<Void> listenableFuture : listenableFutures) {
+        listenableFuture.get();
+      }
     }
 
     return skaffoldProcess.waitFor();
   }
 
+  @VisibleForTesting
   Skaffold setProcessBuilderFactory(Function<List<String>, ProcessBuilder> processBuilderFactory) {
     this.processBuilderFactory = processBuilderFactory;
     return this;

@@ -41,6 +41,10 @@ import org.mockito.junit.MockitoJUnitRunner;
 @RunWith(MockitoJUnitRunner.class)
 public class SkaffoldTest {
 
+  /**
+   * Tests that {@link Skaffold} uses the correct parameters to executor {@code skaffold}. Executes
+   * a script to mock the {@code skaffold} executable.
+   */
   private static void verifyDeploy(String expectedStdout, String expectedStderr, String... command)
       throws InterruptedException, ExecutionException, IOException {
     InputStream stdinInputStream =
@@ -54,7 +58,7 @@ public class SkaffoldTest {
         Arrays.asList("--filename", "skaffoldYaml", "--profile", "profile", "deploy"));
 
     int exitCode =
-        new Skaffold(command)
+        new Skaffold(Skaffold.getListeningExecutorService(), command)
             .setProcessBuilderFactory(
                 commandList -> {
                   Assert.assertEquals(expectedCommandList, commandList);
@@ -62,9 +66,9 @@ public class SkaffoldTest {
                 })
             .setSkaffoldYaml(Paths.get("skaffoldYaml"))
             .setProfile("profile")
-            .setStdinInputStream(stdinInputStream)
-            .setStdoutOutputStream(stdoutOutputStream)
-            .setStderrOutputStream(stderrOutputStream)
+            .redirectToStdin(stdinInputStream)
+            .redirectStdoutTo(stdoutOutputStream)
+            .redirectStderrTo(stderrOutputStream)
             .deploy();
 
     Assert.assertEquals(0, exitCode);

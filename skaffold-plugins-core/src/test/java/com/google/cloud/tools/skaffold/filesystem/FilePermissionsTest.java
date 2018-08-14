@@ -39,7 +39,9 @@ public class FilePermissionsTest {
 
   @Test
   public void testMakeExecutable() throws URISyntaxException, IOException, InterruptedException {
-    Assume.assumeTrue("only for posix filesystems", FilePermissions.isFilesystemPosix());
+    Assume.assumeTrue(
+        "only for posix filesystems",
+        FilePermissions.isFilesystemPosix(temporaryFolder.getRoot().toPath().getFileSystem()));
 
     Path nonExecutableSh = Paths.get(Resources.getResource("non-executable.sh").toURI());
 
