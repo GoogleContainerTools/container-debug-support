@@ -16,6 +16,7 @@
 
 package com.google.cloud.tools.skaffold.command;
 
+import com.google.cloud.tools.skaffold.filesystem.FilePermissions;
 import com.google.cloud.tools.skaffold.filesystem.OperatingSystem;
 import com.google.common.io.Resources;
 import java.io.ByteArrayInputStream;
@@ -24,6 +25,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -76,10 +78,9 @@ public class SkaffoldTest {
   public void testDeploy()
       throws URISyntaxException, IOException, InterruptedException, ExecutionException {
     Assume.assumeTrue("non-Windows test", OperatingSystem.resolve() != OperatingSystem.WINDOWS);
-    verifyDeploy(
-        "input\noutput\n",
-        "error\n",
-        Paths.get(Resources.getResource("command.sh").toURI()).toString());
+    Path commandSh = Paths.get(Resources.getResource("command.sh").toURI());
+    Assert.assertTrue(FilePermissions.makeExecutable(commandSh));
+    verifyDeploy("input\noutput\n", "error\n", commandSh.toString());
   }
 
   @Test
