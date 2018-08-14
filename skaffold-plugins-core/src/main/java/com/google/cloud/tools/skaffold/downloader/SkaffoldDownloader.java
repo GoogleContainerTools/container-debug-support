@@ -46,8 +46,22 @@ public class SkaffoldDownloader {
    * @throws MalformedURLException if the URL to download from is malformed
    */
   public static void downloadLatest(Path destination) throws IOException {
+    download(getLatestUrl(""), destination);
+  }
+
+  /**
+   * Downloads the latest {@code skaffold} release digest.
+   *
+   * @throws IOException if an I/O exception occurs during download
+   * @throws MalformedURLException if the URL to download from is malformed
+   */
+  public static void downloadLatestDigest(Path destination) throws IOException {
+    download(getLatestUrl(".sha256"), destination);
+  }
+
+  private static URL getLatestUrl(String suffix) throws MalformedURLException {
     // Skaffold publishes the latest release with version "latest".
-    download(new URL(getUrl("latest", OperatingSystem.resolve())), destination);
+    return new URL(getUrl("latest", OperatingSystem.resolve()) + suffix);
   }
 
   /**
