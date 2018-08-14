@@ -45,9 +45,8 @@ public class SkaffoldDownloader {
    * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
-  public static boolean downloadLatest(Path destination) throws IOException {
+  public static void downloadLatest(Path destination) throws IOException {
     download(getLatestUrl(""), destination);
-    return destination.toFile().setExecutable(true);
   }
 
   /**
