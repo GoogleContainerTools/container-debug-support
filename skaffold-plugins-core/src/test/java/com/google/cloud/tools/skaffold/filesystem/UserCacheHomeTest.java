@@ -34,7 +34,7 @@ import org.mockito.Mockito;
 /** Tests for {@link UserCacheHome}. */
 public class UserCacheHomeTest {
 
-  @Rule public TemporaryFolder temporaryFolder = new TemporaryFolder();
+  @Rule public final TemporaryFolder temporaryFolder = new TemporaryFolder();
 
   private String fakeCacheHome;
 

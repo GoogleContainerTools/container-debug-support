@@ -37,7 +37,7 @@ public class SkaffoldDownloaderIntegrationTest {
   public void testDownloadLatest()
       throws IOException, InterruptedException, NoSuchAlgorithmException {
     Path temporarySkaffoldExecutable = temporaryFolder.newFile().toPath();
-    Assert.assertTrue(SkaffoldDownloader.downloadLatest(temporarySkaffoldExecutable));
+    SkaffoldDownloader.downloadLatest(temporarySkaffoldExecutable);
     Process skaffoldProcess = new ProcessBuilder(temporarySkaffoldExecutable.toString()).start();
     Assert.assertEquals(0, skaffoldProcess.waitFor());
 
