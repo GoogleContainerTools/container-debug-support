@@ -52,6 +52,7 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release digest.
    *
+   * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
   public static void downloadLatestDigest(Path destination) throws IOException {
