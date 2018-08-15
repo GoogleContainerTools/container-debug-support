@@ -35,6 +35,7 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release.
    *
+   * @param destination the file the download {@code skaffold} to
    * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
@@ -45,6 +46,7 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release digest.
    *
+   * @param destination the file the download {@code skaffold} to
    * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */

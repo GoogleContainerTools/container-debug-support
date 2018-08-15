@@ -96,29 +96,21 @@ public class Skaffold {
       // Checks if the digest is up-to-date and redownloads skaffold if not.
       Path temporaryDigestFile = Files.createTempFile("", "");
       temporaryDigestFile.toFile().deleteOnExit();
-      if (logger.isDebugEnabled()) {
-        logger.debug("Downloading latest skaffold release digest");
-      }
+      logger.debug("Downloading latest skaffold release digest");
       SkaffoldDownloader.downloadLatestDigest(temporaryDigestFile);
       byte[] latestDigest = Files.readAllBytes(temporaryDigestFile);
       if (Files.exists(cachedSkaffoldDigestLocation)) {
         byte[] storedDigest = Files.readAllBytes(cachedSkaffoldDigestLocation);
         if (Arrays.equals(storedDigest, latestDigest)) {
-          if (logger.isDebugEnabled()) {
-            logger.debug("Cached skaffold is latest version");
-          }
+          logger.debug("Cached skaffold is latest version");
           return;
         }
       }
-      if (logger.isDebugEnabled()) {
-        logger.debug("Cached skaffold is outdated");
-      }
+      logger.debug("Cached skaffold is outdated");
       Files.write(cachedSkaffoldDigestLocation, latestDigest);
     }
 
-    if (logger.isDebugEnabled()) {
-      logger.debug("Downloading latest skaffold release");
-    }
+    logger.debug("Downloading latest skaffold release");
     SkaffoldDownloader.downloadLatest(cachedSkaffoldLocation);
   }
 
@@ -197,6 +189,7 @@ public class Skaffold {
    * Calls {@code skaffold deploy}.
    *
    * @return the process exit code
+   * @throws ExecutionException if an error occurred while handling the process I/O
    * @throws InterruptedException if the process was interrupted during execution
    * @throws IOException if an I/O exception occurred
    */

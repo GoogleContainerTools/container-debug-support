@@ -37,7 +37,7 @@ public class FilePermissions {
    *
    * @param file the file to make executable
    * @return {@code true} if successful, {@code false} otherwise (such as if the file system does
-   *     not support POSIX permissions
+   *     not support POSIX permissions)
    * @throws IOException if an I/O exception occurred
    */
   public static boolean makeExecutable(Path file) throws IOException {

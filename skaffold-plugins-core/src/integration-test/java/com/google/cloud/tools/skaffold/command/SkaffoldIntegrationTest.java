@@ -41,7 +41,8 @@ public class SkaffoldIntegrationTest {
     Assert.assertTrue(Files.exists(cachedSkaffoldLocation));
 
     // Checks that not having an up-to-date digest causes a re-download.
-    Files.write(cachedSkaffoldDigestLocation, new byte[] {0x10});
+    byte[] arbitraryByteArray = new byte[] {0x10};
+    Files.write(cachedSkaffoldDigestLocation, arbitraryByteArray);
     FileTime originalLastModifiedTime = Files.getLastModifiedTime(cachedSkaffoldLocation);
     Skaffold.ensureSkaffoldIsLatestVersion(cachedSkaffoldLocation, cachedSkaffoldDigestLocation);
     FileTime newLastModifiedTime = Files.getLastModifiedTime(cachedSkaffoldLocation);
