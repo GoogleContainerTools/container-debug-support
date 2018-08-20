@@ -16,8 +16,6 @@
 
 package com.google.cloud.tools.skaffold.command;
 
-import com.google.cloud.tools.skaffold.downloader.SkaffoldDownloader;
-import com.google.cloud.tools.skaffold.filesystem.UserCacheHome;
 import com.google.common.annotations.VisibleForTesting;
 import com.google.common.io.ByteStreams;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -26,7 +24,6 @@ import com.google.common.util.concurrent.MoreExecutors;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -38,21 +35,9 @@ import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.function.Supplier;
 import javax.annotation.Nullable;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 /** Runs {@code skaffold} commands. */
 public class Skaffold {
-
-  private static final Logger logger = LoggerFactory.getLogger(Skaffold.class);
-
-  /** The location to store {@code skaffold} if auto-downloading it. */
-  private static final Path CACHED_SKAFFOLD_LOCATION =
-      UserCacheHome.getCacheHome().resolve("skaffold");
-
-  /** The location to store the digest for {@code skaffold} if auto-downloading it. */
-  private static final Path CACHED_SKAFFOLD_DIGEST_LOCATION =
-      CACHED_SKAFFOLD_LOCATION.resolveSibling("skaffold.sha256");
 
   @VisibleForTesting
   static Supplier<ExecutorService> executorServiceSupplier = Executors::newCachedThreadPool;
@@ -68,17 +53,6 @@ public class Skaffold {
   }
 
   /**
-   * Initializes {@link Skaffold} with a managed {@code skaffold} executable.
-   *
-   * @return a new {@link Skaffold}
-   * @throws IOException if an I/O exception occurred
-   */
-  public static Skaffold init() throws IOException {
-    ensureSkaffoldIsLatestVersion(CACHED_SKAFFOLD_LOCATION, CACHED_SKAFFOLD_DIGEST_LOCATION);
-    return new Skaffold(getListeningExecutorService(), CACHED_SKAFFOLD_LOCATION.toString());
-  }
-
-  /**
    * Sets the {@link ExecutorService} to handle the {@code skaffold} process. Uses {@link
    * Executors#newCachedThreadPool} by default.
    *
@@ -86,32 +60,6 @@ public class Skaffold {
    */
   public static void setExecutorService(ExecutorService executorService) {
     Skaffold.executorServiceSupplier = () -> executorService;
-  }
-
-  // TODO: Break out into separate skaffold auto-manager class.
-  @VisibleForTesting
-  static void ensureSkaffoldIsLatestVersion(
-      Path cachedSkaffoldLocation, Path cachedSkaffoldDigestLocation) throws IOException {
-    if (Files.exists(cachedSkaffoldLocation)) {
-      // Checks if the digest is up-to-date and redownloads skaffold if not.
-      Path temporaryDigestFile = Files.createTempFile("", "");
-      temporaryDigestFile.toFile().deleteOnExit();
-      logger.debug("Downloading latest skaffold release digest");
-      SkaffoldDownloader.downloadLatestDigest(temporaryDigestFile);
-      byte[] latestDigest = Files.readAllBytes(temporaryDigestFile);
-      if (Files.exists(cachedSkaffoldDigestLocation)) {
-        byte[] storedDigest = Files.readAllBytes(cachedSkaffoldDigestLocation);
-        if (Arrays.equals(storedDigest, latestDigest)) {
-          logger.debug("Cached skaffold is latest version");
-          return;
-        }
-      }
-      logger.debug("Cached skaffold is outdated");
-      Files.write(cachedSkaffoldDigestLocation, latestDigest);
-    }
-
-    logger.debug("Downloading latest skaffold release");
-    SkaffoldDownloader.downloadLatest(cachedSkaffoldLocation);
   }
 
   @VisibleForTesting
