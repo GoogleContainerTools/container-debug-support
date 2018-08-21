@@ -16,20 +16,13 @@
 
 package com.google.cloud.tools.skaffold.downloader;
 
-import static java.nio.file.attribute.PosixFilePermission.GROUP_EXECUTE;
-import static java.nio.file.attribute.PosixFilePermission.OTHERS_EXECUTE;
-import static java.nio.file.attribute.PosixFilePermission.OWNER_EXECUTE;
-
+import com.google.cloud.tools.skaffold.filesystem.FilePermissions;
 import com.google.cloud.tools.skaffold.filesystem.OperatingSystem;
 import com.google.common.annotations.VisibleForTesting;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.attribute.PosixFilePermission;
-import java.util.EnumSet;
-import java.util.Set;
 
 /**
  * Downloads {@code skaffold} executable.
@@ -42,6 +35,7 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release.
    *
+   * @param destination the file the download {@code skaffold} to
    * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
@@ -52,6 +46,7 @@ public class SkaffoldDownloader {
   /**
    * Downloads the latest {@code skaffold} release digest.
    *
+   * @param destination the file the download {@code skaffold} to
    * @throws IOException if an I/O exception occurs during download
    * @throws MalformedURLException if the URL to download from is malformed
    */
@@ -77,15 +72,7 @@ public class SkaffoldDownloader {
     }
 
     // Makes skaffold executable.
-    try {
-      Set<PosixFilePermission> executableFilePermissions =
-          Files.getPosixFilePermissions(destination);
-      executableFilePermissions.addAll(EnumSet.of(OWNER_EXECUTE, GROUP_EXECUTE, OTHERS_EXECUTE));
-      Files.setPosixFilePermissions(destination, executableFilePermissions);
-
-    } catch (UnsupportedOperationException ex) {
-      // File system does not support POSIX.
-    }
+    FilePermissions.makeExecutable(destination);
   }
 
   /**
