@@ -8,5 +8,6 @@ if [ ! -d /dbg ]; then
     exit 1
 fi
 
-# Install Delve for Go
-cp -p /duct-tape/dlv /dbg
+# Install debugging runtime files in /dbg
+cd /duct-tape
+cp -rp . /dbg
