@@ -23,3 +23,10 @@ podspec that would be transformed to `k8s-pod.yaml` to:
   - mount a volume to hold the debugging support files
   - provide an initContainer to populate the volume
   - mount the volume to the applicable containers
+
+This directory includes a `skaffold.yaml` for development of the
+the `duct-tape` initContainer image.  To add support for a new
+language runtime, run `skaffold dev` and tweak `duct-tape/Dockerfile`
+to download and install the necessary files in `/duct-tape`.  The
+initContainer will then copy the contents of this image into place
+via its entrypoint (`install.sh`).

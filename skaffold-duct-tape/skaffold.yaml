@@ -1,0 +1,10 @@
+apiVersion: skaffold/v1beta5
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/gcp-dev-tools/duct-tape
+    context: duct-tape
+deploy:
+  kubectl:
+    manifests:
+      - k8s-*
