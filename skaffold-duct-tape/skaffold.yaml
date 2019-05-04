@@ -4,6 +4,10 @@ build:
   artifacts:
   - image: gcr.io/gcp-dev-tools/duct-tape
     context: duct-tape
+test:
+  - image: gcr.io/gcp-dev-tools/duct-tape
+    structureTests:
+      - ./test/*
 deploy:
   kubectl:
     manifests:

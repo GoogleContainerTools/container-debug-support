@@ -1,0 +1,14 @@
+schemaVersion: 2.0.0
+
+fileExistenceTests:
+  - name: 'dlv'
+    path: '/duct-tape/go/bin/dlv'
+    shouldExist: true
+  - name: 'ptvsd for python 2.7 egg'
+    path: '/duct-tape/python/lib/python2.7/site-packages/ptvsd-4.2.8-py2.7.egg/EGG-INFO/PKG-INFO'
+  - name: 'ptvsd for python 2.7'
+    path: '/duct-tape/python/lib/python2.7/site-packages/ptvsd-4.2.8-py2.7.egg/ptvsd/__init__.py'
+  - name: 'ptvsd for python 3.7 egg'
+    path: '/duct-tape/python/lib/python3.7/site-packages/ptvsd-4.2.8-py3.7.egg/EGG-INFO/PKG-INFO'
+  - name: 'ptvsd for python 3.7 egg'
+    path: '/duct-tape/python/lib/python3.7/site-packages/ptvsd-4.2.8-py3.7.egg/ptvsd/__init__.py'
