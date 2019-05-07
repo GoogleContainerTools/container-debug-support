@@ -4,11 +4,15 @@ build:
   artifacts:
   - image: gcr.io/gcp-dev-tools/duct-tape
     context: duct-tape
+
+  # simple image that lists the contents of / and /dbg
+  - image: test-image
+    context: test/test-image
 test:
   - image: gcr.io/gcp-dev-tools/duct-tape
     structureTests:
-      - ./test/*
+      - ./test/duct-tape-structure-tests.yaml
 deploy:
   kubectl:
     manifests:
-      - k8s-*
+      - test/k8s-test-installation.yaml

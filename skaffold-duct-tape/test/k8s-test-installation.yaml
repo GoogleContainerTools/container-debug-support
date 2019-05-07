@@ -12,16 +12,8 @@ spec:
     - name: dbg
       mountPath: "/dbg"
   containers:
-  - name: helloworld1
-    image: busybox
-    command: ['sh', '-c', 'echo "The app is running"; ls / /dbg; sleep 3600']
-    volumeMounts:
-    - name: dbg
-      mountPath: "/dbg"
-      readOnly: true
-  - name: helloworld2
-    image: busybox
-    command: ['sh', '-c', 'echo "The app is running"; ls / /dbg; sleep 3600']
+  - name: test-image
+    image: test-image
     volumeMounts:
     - name: dbg
       mountPath: "/dbg"
