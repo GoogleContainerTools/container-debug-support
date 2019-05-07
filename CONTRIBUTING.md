@@ -1,4 +1,4 @@
-# Contributing to Skaffold tools for Java
+# Contributing to Container Debug Runtime Support
 
 We'd love to accept your patches and contributions to this project. There are
 just a few small guidelines you need to follow.
@@ -26,8 +26,6 @@ again.
 2. Fork the repository into your own Github account.
 3. Please include unit tests (and integration tests if applicable) for all new code.
 4. Make sure all existing tests pass.
-   * In `skaffold-plugins-core`, run `./gradlew clean goJF build integrationTest`
-   * In `skaffold-gradle-plugin`, run `./gradlew clean goJF build integrationTest`
-   * In `skaffold-maven-plugin`, run `./mvnw clean fmt:format verify -Pintegration-tests`
+   * TBD
 5. Associate the change with an existing issue or file a [new issue](../../issues).
 6. Create a pull request!

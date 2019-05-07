@@ -1,7 +1,0 @@
-apiVersion: skaffold/v1alpha2
-kind: Config
-deploy:
-  kubectl:
-    manifests:
-    - MANIFEST_PATH_1
-    - MANIFEST_PATH_2
