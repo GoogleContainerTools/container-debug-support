@@ -10,3 +10,16 @@ fileExistenceTests:
     path: '/duct-tape/python/lib/python3.7/site-packages/ptvsd/__init__.py'
   - name: 'vsdbg for .net core'
     path: '/duct-tape/netcore/vsdbg'
+
+commandTests:
+  - name: "run with no /dbg should fail"
+    command: "sh"
+    args: ["/install.sh"]
+    expectedError: ["Error: installation requires a volume mount at /dbg"]
+    exitCode: 1
+  - name: "run with /dbg should install"
+    setup: [["mkdir", "/dbg"]]
+    command: "sh"
+    args: ["/install.sh"]
+    expectedOutput: ["Installing runtime debugging support files in /dbg", "Installation complete"]
+    exitCode: 0
