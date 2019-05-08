@@ -8,11 +8,10 @@ are packaged into an image container suitable for use as an
 `initContainer` on a pod.
 
 Currently supported:
-  * None!
+  * Go: provides [Delve](https://github.com/go-delve/delve)
+  * Python: provides [`ptvsd`](https://github.com/Microsoft/ptvsd),
+    a debug adapter that can be used for VS Code and more
 
-In Progress:
-
-  * Go: provides Delve
 
 ## Development
 
