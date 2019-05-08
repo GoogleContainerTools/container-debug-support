@@ -8,7 +8,8 @@ fileExistenceTests:
     path: '/duct-tape/python/lib/python2.7/site-packages/ptvsd/__init__.py'
   - name: 'ptvsd for python 3.7'
     path: '/duct-tape/python/lib/python3.7/site-packages/ptvsd/__init__.py'
-
+  - name: 'vsdbg for .net core'
+    path: '/duct-tape/netcore/vsdbg'
 
 commandTests:
   - name: "run with no /dbg should fail"
