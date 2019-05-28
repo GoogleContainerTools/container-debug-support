@@ -21,11 +21,17 @@ test:
 deploy:
   kubectl:
     manifests:
+      # launches a busybox image with the duct-tape images as initContainers
+      # and lists the contents of /dbg
       - test/k8s-test-installation.yaml
 
 profiles:
-  # pushes images to production with :latest
+  - name: local
+    build:
+      local:
+        push: false
   - name: prod
+    # pushes images to production with :latest
     build:
       tagPolicy:
         envTemplate:
