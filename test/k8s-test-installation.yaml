@@ -1,0 +1,39 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: demo-duct-tape
+  labels:
+    app: demo-duct-tape
+spec:
+  initContainers:
+  - name: init-old
+    image: gcr.io/gcp-dev-tools/duct-tape
+    volumeMounts:
+    - name: dbg
+      mountPath: "/dbg"
+#  - name: init-go
+#    image: gcr.io/gcp-dev-tools/duct-tape/go
+#    volumeMounts:
+#    - name: dbg
+#      mountPath: "/dbg"
+#  - name: init-python
+#    image: gcr.io/gcp-dev-tools/duct-tape/python
+#    volumeMounts:
+#    - name: dbg
+#      mountPath: "/dbg"
+#  - name: init-dotnet
+#    image: gcr.io/gcp-dev-tools/duct-tape/dotnet
+#    volumeMounts:
+#    - name: dbg
+#      mountPath: "/dbg"
+  containers:
+  - name: ls-dbg
+    image: busybox
+    command: [sh, -c, 'echo ">> /dbg"; ls -l /dbg']
+    volumeMounts:
+    - name: dbg
+      mountPath: "/dbg"
+      readOnly: true
+  volumes:
+  - name: dbg
+    emptyDir: {}

@@ -1,0 +1,32 @@
+apiVersion: skaffold/v1beta9
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/gcp-dev-tools/duct-tape/go
+    docker:
+      dockerfile: Dockerfile.go
+  - image: gcr.io/gcp-dev-tools/duct-tape/python
+    docker:
+      dockerfile: Dockerfile.python
+  - image: gcr.io/gcp-dev-tools/duct-tape/dotnet
+    docker:
+      dockerfile: Dockerfile.dotnet
+test:
+  - image: gcr.io/gcp-dev-tools/duct-tape/go
+    structureTests: [./test/structure-tests-go.yaml]
+  - image: gcr.io/gcp-dev-tools/duct-tape/python
+    structureTests: [./test/structure-tests-python.yaml]
+  - image: gcr.io/gcp-dev-tools/duct-tape/dotnet
+    structureTests: [./test/structure-tests-dotnet.yaml]
+deploy:
+  kubectl:
+    manifests:
+      - test/k8s-test-installation.yaml
+
+profiles:
+  # pushes images to production with :latest
+  - name: prod
+    build:
+      tagPolicy:
+        envTemplate:
+          template: '{{.IMAGE_NAME}}:latest'
