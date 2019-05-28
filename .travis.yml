@@ -8,5 +8,4 @@ install:
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
 script:
-  - env | sort
-  - $HOME/skaffold build -p local
+  - skaffold build -p local
