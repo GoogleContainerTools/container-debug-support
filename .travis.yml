@@ -3,4 +3,4 @@ services:
   - docker
 install: 
   - curl -Lo $HOME/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64 && chmod +x $HOME/skaffold
-script: skaffold build
+script: $HOME/skaffold build
