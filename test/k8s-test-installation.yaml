@@ -6,26 +6,21 @@ metadata:
     app: demo-duct-tape
 spec:
   initContainers:
-  - name: init-old
-    image: gcr.io/gcp-dev-tools/duct-tape
+  - name: init-go
+    image: gcr.io/gcp-dev-tools/duct-tape/go
     volumeMounts:
     - name: dbg
       mountPath: "/dbg"
-#  - name: init-go
-#    image: gcr.io/gcp-dev-tools/duct-tape/go
-#    volumeMounts:
-#    - name: dbg
-#      mountPath: "/dbg"
-#  - name: init-python
-#    image: gcr.io/gcp-dev-tools/duct-tape/python
-#    volumeMounts:
-#    - name: dbg
-#      mountPath: "/dbg"
-#  - name: init-dotnet
-#    image: gcr.io/gcp-dev-tools/duct-tape/dotnet
-#    volumeMounts:
-#    - name: dbg
-#      mountPath: "/dbg"
+  - name: init-python
+    image: gcr.io/gcp-dev-tools/duct-tape/python
+    volumeMounts:
+    - name: dbg
+      mountPath: "/dbg"
+  - name: init-netcore
+    image: gcr.io/gcp-dev-tools/duct-tape/netcore
+    volumeMounts:
+    - name: dbg
+      mountPath: "/dbg"
   containers:
   - name: ls-dbg
     image: busybox

@@ -3,21 +3,18 @@ kind: Config
 build:
   artifacts:
   - image: gcr.io/gcp-dev-tools/duct-tape/go
-    docker:
-      dockerfile: Dockerfile.go
+    context: go
   - image: gcr.io/gcp-dev-tools/duct-tape/python
-    docker:
-      dockerfile: Dockerfile.python
-  - image: gcr.io/gcp-dev-tools/duct-tape/dotnet
-    docker:
-      dockerfile: Dockerfile.dotnet
+    context: python
+  - image: gcr.io/gcp-dev-tools/duct-tape/netcore
+    context: netcore
 test:
   - image: gcr.io/gcp-dev-tools/duct-tape/go
     structureTests: [./test/structure-tests-go.yaml]
   - image: gcr.io/gcp-dev-tools/duct-tape/python
     structureTests: [./test/structure-tests-python.yaml]
-  - image: gcr.io/gcp-dev-tools/duct-tape/dotnet
-    structureTests: [./test/structure-tests-dotnet.yaml]
+  - image: gcr.io/gcp-dev-tools/duct-tape/netcore
+    structureTests: [./test/structure-tests-netcore.yaml]
 deploy:
   kubectl:
     manifests:
