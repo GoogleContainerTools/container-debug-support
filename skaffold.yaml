@@ -1,0 +1,38 @@
+apiVersion: skaffold/v1beta9
+kind: Config
+build:
+  artifacts:
+  - image: gcr.io/gcp-dev-tools/duct-tape/go
+    context: go
+  - image: gcr.io/gcp-dev-tools/duct-tape/python
+    context: python
+  - image: gcr.io/gcp-dev-tools/duct-tape/netcore
+    context: netcore
+test:
+  - image: gcr.io/gcp-dev-tools/duct-tape/go
+    structureTests: [./test/structure-tests-go.yaml]
+  - image: gcr.io/gcp-dev-tools/duct-tape/python
+    structureTests: [./test/structure-tests-python.yaml]
+  - image: gcr.io/gcp-dev-tools/duct-tape/netcore
+    structureTests: [./test/structure-tests-netcore.yaml]
+deploy:
+  kubectl:
+    manifests:
+      # launches a busybox image with the duct-tape images as initContainers
+      # and lists the contents of /dbg: it should list out the top-level
+      # values from the initContainers
+      - test/k8s-test-installation.yaml
+
+profiles:
+  # local: builds to local daemon only
+  - name: local
+    build:
+      local:
+        push: false
+
+  # prod: pushes images to production with :latest
+  - name: prod
+    build:
+      tagPolicy:
+        envTemplate:
+          template: '{{.IMAGE_NAME}}:latest'
