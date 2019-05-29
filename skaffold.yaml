@@ -18,10 +18,19 @@ test:
 deploy:
   kubectl:
     manifests:
+      # launches a busybox image with the duct-tape images as initContainers
+      # and lists the contents of /dbg: it should list out the top-level
+      # values from the initContainers
       - test/k8s-test-installation.yaml
 
 profiles:
-  # pushes images to production with :latest
+  # local: builds to local daemon only
+  - name: local
+    build:
+      local:
+        push: false
+
+  # prod: pushes images to production with :latest
   - name: prod
     build:
       tagPolicy:
