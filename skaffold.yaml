@@ -33,6 +33,8 @@ profiles:
   # prod: pushes images to production with :latest
   - name: prod
     build:
+      local:
+        push: true
       tagPolicy:
         envTemplate:
           template: '{{.IMAGE_NAME}}:latest'
