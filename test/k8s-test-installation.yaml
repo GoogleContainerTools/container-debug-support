@@ -5,6 +5,7 @@ metadata:
   labels:
     app: demo-duct-tape
 spec:
+  restartPolicy: Never
   initContainers:
   - name: init-go
     image: gcr.io/gcp-dev-tools/duct-tape/go
