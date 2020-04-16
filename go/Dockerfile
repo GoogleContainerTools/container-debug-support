@@ -1,7 +1,8 @@
 FROM golang:1.14.1 as delve
 RUN curl --location --output delve-1.4.0.tar.gz https://github.com/go-delve/delve/archive/v1.4.0.tar.gz \
- && tar xzf delve-1.4.0.tar.gz
-RUN cd delve-1.4.0/cmd/dlv && go install
+  && tar xzf delve-1.4.0.tar.gz
+# Produce an as-static-as-possible dlv binary to work on musl and glibc
+RUN cd delve-1.4.0 && CGO_ENABLED=0 go build -o /go/dlv -ldflags '-extldflags "-static"' ./cmd/dlv/
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
@@ -10,4 +11,4 @@ FROM busybox
 COPY install.sh /
 CMD ["/bin/sh", "/install.sh"]
 WORKDIR /duct-tape
-COPY --from=delve /go/bin/dlv go/bin/
+COPY --from=delve /go/dlv go/bin/
