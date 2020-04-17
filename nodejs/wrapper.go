@@ -220,9 +220,11 @@ func findScript(args []string) string {
 }
 
 // isApplicationScript return true if the script appears to be an application
-// script, or false if a library (node_modules) script.
+// script, or false if a library (node_modules) script or `npm` (special case).
 func isApplicationScript(path string) bool {
-	return !strings.HasPrefix(path, "node_modules/") && !strings.Contains(path, "/node_modules/")
+	// We could consider checking if the parent's base name is `bin`?
+	return !strings.HasPrefix(path, "node_modules/") && !strings.Contains(path, "/node_modules/") &&
+		!strings.HasSuffix(path, "/bin/npm")
 }
 
 // envToMap turns a set of VAR=VALUE strings to a map.

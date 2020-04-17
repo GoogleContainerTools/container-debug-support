@@ -82,6 +82,7 @@ func TestIsApplicationScript(t *testing.T) {
 		expected bool
 	}{
 		{"index.js", true},
+		{"/usr/local/bin/npm", false},
 		{"node_modules/nodemon/nodemon.js", false},
 		{"lib/node_modules/nodemon/nodemon.js", false},
 	}
