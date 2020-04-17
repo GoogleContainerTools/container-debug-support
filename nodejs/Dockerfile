@@ -1,7 +1,7 @@
 FROM golang:1.14.1 as build
 COPY . .
-ENV GOPATH=
-RUN go build -o node wrapper.go
+# Produce an as-static-as-possible dlv binary to work on musl and glibc
+RUN GOPATH="" CGO_ENABLED=0 go build -o node -ldflags '-s -w -extldflags "-static"' wrapper.go
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
