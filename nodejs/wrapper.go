@@ -80,12 +80,16 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 	}
 	logrus.Debugf("unwrapped: %s\n", nc.program)
 
+	// use an absolute path in case we're being run within a node_modules directory
 	script := findScript(nc.args)
+	if abs, err := filepath.Abs(script); err == nil {
+		script = abs
+	}
 	logrus.Debugf("script: %s\n", script)
 
 	nodeDebugOption, hasNodeDebug := nc.env["NODE_DEBUG"]
 	if hasNodeDebug {
-		logrus.Debugf("NODE_DEBUG: %s", nodeDebugOption)
+		logrus.Debugf("found NODE_DEBUG: %s", nodeDebugOption)
 	}
 
 	// if we're about to execute the application script, install the NODE_DEBUG
