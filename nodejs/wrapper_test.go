@@ -271,7 +271,7 @@ func TestNodeContext_unwrap(t *testing.T) {
 			description: "first node wins when original not found",
 			input:       nodeContext{program: name, env: map[string]string{"PATH": root + string(os.PathListSeparator) + binPath + string(os.PathListSeparator) + sbinPath}},
 			result:      true,
-			expected:    originalNode,
+			expected:    binNode,
 		},
 	}
 
@@ -406,12 +406,27 @@ func TestIntegration(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("we only support nix")
 	}
+	// Setup: create two directories with nodeBin.  The first directory's
+	// nodeBin should never be invoked.
 	root, err := ioutil.TempDir("", "node")
 	if err != nil {
 		t.Error(err)
 	}
+	firstNodeDir := filepath.Join(root, "first")
+	if err := os.Mkdir(firstNodeDir, 0777); err != nil {
+		t.Error(err)
+	}
+	firstNode := filepath.Join(firstNodeDir, "nodeBin")
+	if err := ioutil.WriteFile(firstNode, []byte{}, 0555); err != nil {
+		t.Errorf("could not create node script: %v", err)
+	}
 
-	actualNode := filepath.Join(root, "nodeBin")
+	actualNodeDir := filepath.Join(root, "actual")
+	if err := os.Mkdir(actualNodeDir, 0777); err != nil {
+		t.Error(err)
+	}
+	actualNode := filepath.Join(actualNodeDir, "nodeBin")
+
 	script := `#!/bin/sh
 if [ -n "$NODE_DEBUG" ]; then
   echo "NODE_DEBUG=$NODE_DEBUG"
@@ -526,7 +541,7 @@ done
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			env := map[string]string{"PATH": root + string(os.PathListSeparator) + os.Getenv("PATH")}
+			env := map[string]string{"PATH": firstNodeDir + string(os.PathListSeparator) + actualNodeDir + string(os.PathListSeparator) + os.Getenv("PATH")}
 			for k, v := range test.env {
 				env[k] = v
 			}

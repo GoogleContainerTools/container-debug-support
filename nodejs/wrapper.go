@@ -122,19 +122,35 @@ func (nc *nodeContext) unwrap() bool {
 	if nc == nil {
 		return false
 	}
-	path := nc.env["PATH"]
+
+	// Here we try to find the original program.  When a program is
+	// resolved from the PATH, most shells will set argv[0] to the
+	// command and so it won't appear to exist and so the first file
+	// resolved in the PATH should be this program.
 	origInfo, err := os.Stat(nc.program)
 	origFound := err == nil
 	if err != nil && !os.IsNotExist(err) {
 		logrus.Errorf("unable to stat %q: %v", nc.program, err)
 		return false
 	}
+
+	path := nc.env["PATH"]
 	base := filepath.Base(nc.program)
 	for _, dir := range strings.Split(path, string(os.PathListSeparator)) {
 		p := filepath.Join(dir, base)
-		if pInfo, err := os.Stat(p); err == nil && (!origFound || !os.SameFile(origInfo, pInfo)) {
-			nc.program = p
-			return true
+		if pInfo, err := os.Stat(p); err == nil {
+			if !origFound {
+				// the original nc.program was not resolved, meaning this
+				// it had been resolved in the PATH, so treat this first
+				// instance as the original file and continue searching
+				logrus.Debugf("unwrap: presumed wrapper at %s", p)
+				origInfo = pInfo
+				origFound = true
+			} else if !os.SameFile(origInfo, pInfo) {
+				logrus.Debugf("unwrap: replacing %s -> %s", nc.program, p)
+				nc.program = p
+				return true
+			}
 		}
 	}
 	logrus.Errorf("unable to unwrap %q: not in PATH", base)
