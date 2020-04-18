@@ -90,7 +90,7 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 
 	// if we're about to execute the application script, install the NODE_DEBUG
 	// arguments if found and go
-	if isApplicationScript(script) {
+	if isApplicationScript(script) || script == "" {
 		if hasNodeDebug {
 			nc.stripInspectArgs() // top-level debug options win
 			nc.addNodeArg(nodeDebugOption)
