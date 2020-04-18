@@ -45,8 +45,12 @@ type nodeContext struct {
 
 func main() {
 	logrus.SetLevel(logrusLevel())
+	logrus.Debugf("Launched: %v", os.Args)
 
-	nc := nodeContext{program: os.Args[0], args: os.Args[1:], env: envToMap(os.Environ())}
+	env := envToMap(os.Environ())
+	// suppress npm warnings when node on PATH isn't the node used for npm
+	env["npm_config_scripts_prepend_node_path"] = "false"
+	nc := nodeContext{program: os.Args[0], args: os.Args[1:], env: env}
 	if err := run(&nc, os.Stdin, os.Stdout, os.Stderr); err != nil {
 		logrus.Fatal(err)
 	}
