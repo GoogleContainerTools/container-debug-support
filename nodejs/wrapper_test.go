@@ -240,37 +240,37 @@ func TestNodeContext_unwrap(t *testing.T) {
 	tests := []struct {
 		description string
 		input       nodeContext
-		result      bool
+		noErr      bool
 		expected    string
 	}{
 		{
 			description: "no PATH leaves unchanged",
 			input:       nodeContext{program: originalNode},
-			result:      false,
+			noErr:      false,
 			expected:    originalNode,
 		},
 		{
 			description: "empty PATH leaves unchanged",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": ""}},
-			result:      false,
+			noErr:      false,
 			expected:    originalNode,
 		},
 		{
 			description: "no other node leaves unchanged",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": root}},
-			result:      false,
+			noErr:      false,
 			expected:    originalNode,
 		},
 		{
 			description: "first other node wins",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": root + string(os.PathListSeparator) + binPath + string(os.PathListSeparator) + sbinPath}},
-			result:      true,
+			noErr:      true,
 			expected:    binNode,
 		},
 		{
 			description: "first node wins when original not found",
 			input:       nodeContext{program: name, env: map[string]string{"PATH": root + string(os.PathListSeparator) + binPath + string(os.PathListSeparator) + sbinPath}},
-			result:      true,
+			noErr:      true,
 			expected:    binNode,
 		},
 	}
@@ -278,9 +278,10 @@ func TestNodeContext_unwrap(t *testing.T) {
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			copy := test.input
-			result := copy.unwrap()
-			if result != test.result {
-				t.Errorf("expected unwrap() = %v but got %v", test.result, result)
+			err := copy.unwrap()
+			noErr := err == nil
+			if noErr != test.noErr {
+				t.Errorf("unexpected unwrap() error return: %q", err)
 			}
 			if copy.program != test.expected {
 				t.Errorf("expected %v but got %v", test.expected, copy.program)

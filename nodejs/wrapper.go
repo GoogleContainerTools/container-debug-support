@@ -25,6 +25,7 @@ limitations under the License.
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -45,7 +46,7 @@ type nodeContext struct {
 
 func main() {
 	logrus.SetLevel(logrusLevel())
-	logrus.Debugf("Launched: %v", os.Args)
+	logrus.Debugln("Launched: ", os.Args)
 
 	env := envToMap(os.Environ())
 	// suppress npm warnings when node on PATH isn't the node used for npm
@@ -57,39 +58,36 @@ func main() {
 }
 
 func logrusLevel() logrus.Level {
-	switch os.Getenv("WRAPPER_VERBOSE") {
-	case "trace":
-		return logrus.TraceLevel
-	case "debug":
-		return logrus.DebugLevel
-	case "info":
-		return logrus.InfoLevel
-	case "warn":
-		return logrus.WarnLevel
-	case "error":
-		return logrus.ErrorLevel
-
-	default:
-		return logrus.WarnLevel
+	v := os.Getenv("WRAPPER_VERBOSE")
+	if v != "" {
+		if l, err := logrus.ParseLevel(v); err == nil {
+			return l
+		}
+		logrus.Warnln("Unknown logging level: WRAPPER_VERBOSE=", v)
 	}
+	return logrus.WarnLevel
 }
 
 func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
-	if !nc.unwrap() {
-		return fmt.Errorf("unwrap could not find actual executable")
+	if err := nc.unwrap(); err != nil {
+		return fmt.Errorf("could not unwrap: %w", err)
 	}
-	logrus.Debugf("unwrapped: %s\n", nc.program)
+	logrus.Debugln("unwrapped: ", nc.program)
 
-	// use an absolute path in case we're being run within a node_modules directory
+	// Use an absolute path in case we're being run within a node_modules directory
+	// If there's an error, then hand off immediately to the real node.
 	script := findScript(nc.args)
 	if abs, err := filepath.Abs(script); err == nil {
 		script = abs
-	}
-	logrus.Debugf("script: %s\n", script)
+	} else {
+		logrus.Warn("could not access script: ", err)
+		return nc.exec(stdin, stdout, stderr)
+	}		
+	logrus.Debugln("script: ", script)
 
 	nodeDebugOption, hasNodeDebug := nc.env["NODE_DEBUG"]
 	if hasNodeDebug {
-		logrus.Debugf("found NODE_DEBUG: %s", nodeDebugOption)
+		logrus.Debugln("found NODE_DEBUG=", nodeDebugOption)
 	}
 
 	// if we're about to execute the application script, install the NODE_DEBUG
@@ -108,7 +106,7 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 	if inspectArg != "" {
 		logrus.Debugf("Stripped %q as not an app script", inspectArg)
 		if !hasNodeDebug {
-			logrus.Debugf("Setting NODE_DEBUG: %s", inspectArg)
+			logrus.Debugln("Setting NODE_DEBUG=", inspectArg)
 			nc.env["NODE_DEBUG"] = inspectArg
 		}
 	}
@@ -122,9 +120,9 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 }
 
 // unwrap looks for the real node executable (not this wrapper).
-func (nc *nodeContext) unwrap() bool {
+func (nc *nodeContext) unwrap() error {
 	if nc == nil {
-		return false
+		return fmt.Errorf("nil context")
 	}
 
 	// Here we try to find the original program.  When a program is
@@ -134,8 +132,7 @@ func (nc *nodeContext) unwrap() bool {
 	origInfo, err := os.Stat(nc.program)
 	origFound := err == nil
 	if err != nil && !os.IsNotExist(err) {
-		logrus.Errorf("unable to stat %q: %v", nc.program, err)
-		return false
+		return fmt.Errorf("unable to stat %q: %v", nc.program, err)
 	}
 
 	path := nc.env["PATH"]
@@ -147,18 +144,17 @@ func (nc *nodeContext) unwrap() bool {
 				// the original nc.program was not resolved, meaning this
 				// it had been resolved in the PATH, so treat this first
 				// instance as the original file and continue searching
-				logrus.Debugf("unwrap: presumed wrapper at %s", p)
+				logrus.Debugln("unwrap: presumed wrapper at ", p)
 				origInfo = pInfo
 				origFound = true
 			} else if !os.SameFile(origInfo, pInfo) {
 				logrus.Debugf("unwrap: replacing %s -> %s", nc.program, p)
 				nc.program = p
-				return true
+				return nil
 			}
 		}
 	}
-	logrus.Errorf("unable to unwrap %q: not in PATH", base)
-	return false
+	return fmt.Errorf("could not find %q in PATH", base)
 }
 
 // stripInspectArgs removes all `--inspect*` args from both the command-line and from
@@ -204,10 +200,6 @@ func (nc *nodeContext) handleNodemon() {
 
 func (nc *nodeContext) addNodeArg(nodeArg string) {
 	// find the script location and insert the provided argument
-	if len(nc.args) == 0 {
-		nc.args = []string{nodeArg}
-		return
-	}
 	for i, arg := range nc.args {
 		if len(arg) > 0 && arg[0] != '-' {
 			nc.args = append(nc.args, "")
@@ -217,13 +209,14 @@ func (nc *nodeContext) addNodeArg(nodeArg string) {
 			return
 		}
 	}
+	// script not found so add at end
 	nc.args = append(nc.args, nodeArg)
 }
 
 // exec runs the command, and returns an error should one occur.
 func (nc *nodeContext) exec(in io.Reader, out, err io.Writer) error {
 	logrus.Debugf("exec: %s %v (env: %v)", nc.program, nc.args, nc.env)
-	cmd := exec.Command(nc.program, nc.args...)
+	cmd := exec.CommandContext(context.Background(), nc.program, nc.args...)
 	cmd.Env = envFromMap(nc.env)
 	cmd.Stdin = in
 	cmd.Stdout = out
@@ -253,9 +246,6 @@ func isApplicationScript(path string) bool {
 
 // envToMap turns a set of VAR=VALUE strings to a map.
 func envToMap(entries []string) map[string]string {
-	if len(entries) == 0 {
-		return nil
-	}
 	m := make(map[string]string)
 	for _, entry := range entries {
 		kv := strings.SplitN(entry, "=", 2)
@@ -275,10 +265,10 @@ func envFromMap(env map[string]string) []string {
 
 // stripInspectArg searches and removes all node `--inspect` style arguments, returning the
 // altered arguments and the inspect argument.
-func stripInspectArg(args []string) (newArgs []string, inspectArg string) {
+func stripInspectArg(args []string) ([]string, string) {
 	// inspect directives are always a single argument: `node --inspect 9226` causes node to load 9226 as a file
-	newArgs = nil
-	inspectArg = "" // default case: no inspect arg found
+	var newArgs []string
+	inspectArg := "" // default case: no inspect arg found
 
 	for i, arg := range args {
 		if strings.HasPrefix(arg, "--inspect") {
@@ -295,5 +285,5 @@ func stripInspectArg(args []string) (newArgs []string, inspectArg string) {
 		}
 		newArgs = append(newArgs, arg)
 	}
-	return
+	return newArgs, inspectArg
 }
