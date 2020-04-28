@@ -12,7 +12,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && patch -p0 < delve-only-same-user.patch
 
 # Produce an as-static-as-possible dlv binary to work on musl and glibc
-RUN cd delve-1.4.0 && CGO_ENABLED=0 go build -o /go/dlv -ldflags '-extldflags "-static"' ./cmd/dlv/
+RUN cd delve-1.4.0 && CGO_ENABLED=0 go build -o /go/dlv -ldflags '-s -w -extldflags "-static"' ./cmd/dlv/
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger

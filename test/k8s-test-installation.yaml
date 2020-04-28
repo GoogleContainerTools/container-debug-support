@@ -22,6 +22,11 @@ spec:
     volumeMounts:
     - name: dbg
       mountPath: "/dbg"
+  - name: init-nodejs
+    image: gcr.io/gcp-dev-tools/duct-tape/nodejs
+    volumeMounts:
+    - name: dbg
+      mountPath: "/dbg"
   containers:
   - name: ls-dbg
     image: busybox
