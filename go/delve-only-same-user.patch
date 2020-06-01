@@ -1,7 +1,11 @@
-diff --git delve-1.4.0/cmd/dlv/cmds/commands.go delve-1.4.0/cmd/dlv/cmds/commands.go
-index 0a17860..7e46206 100644
---- delve-1.4.0/cmd/dlv/cmds/commands.go
-+++ delve-1.4.0/cmd/dlv/cmds/commands.go
+Patch delve to default --only-same-user to false [1].
+Required as connections proxied via `kubectl port-forward` come from
+the outside of the pod, and so connecting to the dlv port is refused.
+
+[1] https://github.com/go-delve/delve/pull/1764
+
+--- cmd/dlv/cmds/commands.go
++++ cmd/dlv/cmds/commands.go
 @@ -114,7 +114,7 @@ func New(docCall bool) *cobra.Command {
  	RootCommand.PersistentFlags().StringVar(&BuildFlags, "build-flags", buildFlagsDefault, "Build flags, to be passed to the compiler.")
  	RootCommand.PersistentFlags().StringVar(&WorkingDir, "wd", ".", "Working directory for running the program.")
