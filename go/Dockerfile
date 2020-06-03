@@ -1,8 +1,10 @@
-FROM golang:1.14.1 as delve
+FROM golang:1.14.3 as delve
 
-RUN curl --location --output delve-1.4.0.tar.gz https://github.com/go-delve/delve/archive/v1.4.0.tar.gz \
-  && tar xzf delve-1.4.0.tar.gz \
-  && mv delve-1.4.0 delve-source
+ARG DELVE_VERSION=1.4.1
+
+RUN curl --location --output delve-$DELVE_VERSION.tar.gz https://github.com/go-delve/delve/archive/v$DELVE_VERSION.tar.gz \
+  && tar xzf delve-$DELVE_VERSION.tar.gz \
+  && mv delve-$DELVE_VERSION delve-source
 
 # Patch delve to change default for --only-same-user to false
 # Required as `kubectl port-forward` to dlv port is refused.

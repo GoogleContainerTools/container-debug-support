@@ -7,11 +7,11 @@ the outside of the pod, and so connecting to the dlv port is refused.
 --- cmd/dlv/cmds/commands.go
 +++ cmd/dlv/cmds/commands.go
 @@ -114,7 +114,7 @@ func New(docCall bool) *cobra.Command {
- 	RootCommand.PersistentFlags().StringVar(&BuildFlags, "build-flags", buildFlagsDefault, "Build flags, to be passed to the compiler.")
- 	RootCommand.PersistentFlags().StringVar(&WorkingDir, "wd", ".", "Working directory for running the program.")
- 	RootCommand.PersistentFlags().BoolVarP(&CheckGoVersion, "check-go-version", "", true, "Checks that the version of Go in use is compatible with Delve.")
--	RootCommand.PersistentFlags().BoolVarP(&CheckLocalConnUser, "only-same-user", "", true, "Only connections from the same user that started this instance of Delve are allowed to connect.")
-+	RootCommand.PersistentFlags().BoolVarP(&CheckLocalConnUser, "only-same-user", "", false, "Only connections from the same user that started this instance of Delve are allowed to connect.")
- 	RootCommand.PersistentFlags().StringVar(&Backend, "backend", "default", `Backend selection (see 'dlv help backend').`)
- 
+ 	rootCommand.PersistentFlags().StringVar(&buildFlags, "build-flags", buildFlagsDefault, "Build flags, to be passed to the compiler.")
+ 	rootCommand.PersistentFlags().StringVar(&workingDir, "wd", ".", "Working directory for running the program.")
+ 	rootCommand.PersistentFlags().BoolVarP(&checkGoVersion, "check-go-version", "", true, "Checks that the version of Go in use is compatible with Delve.")
+-	rootCommand.PersistentFlags().BoolVarP(&checkLocalConnUser, "only-same-user", "", true, "Only connections from the same user that started this instance of Delve are allowed to connect.")
++	rootCommand.PersistentFlags().BoolVarP(&checkLocalConnUser, "only-same-user", "", false, "Only connections from the same user that started this instance of Delve are allowed to connect.")
+ 	rootCommand.PersistentFlags().StringVar(&backend, "backend", "default", `Backend selection (see 'dlv help backend').`)
+
  	// 'attach' subcommand.
