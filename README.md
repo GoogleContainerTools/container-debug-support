@@ -35,3 +35,13 @@ should download the necessary files into the container image.  The
 image's entrypoint should then copy those files into place at
 `/dbg/<runtime>`.  The image should be added to the `skaffold.yaml`
 and referenced within `test/k8s-test-installation.yaml`.
+
+### Testing
+
+Integration tests are found in `integration/`.  These build and
+launch applications as pods that are similar to the transformed
+form produced by `skaffold debug`.  To run:
+
+```sh
+sh run-its.sh
+```
