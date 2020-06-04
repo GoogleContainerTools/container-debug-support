@@ -17,8 +17,13 @@ spec:
     - --api-version=2
     - ./app
     ports:
+    - containerPort: 8080
     - containerPort: 56286
       name: dlv
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 8080
     volumeMounts:
     - mountPath: /dbg
       name: go-debugging-support

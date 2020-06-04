@@ -15,6 +15,10 @@ spec:
     - containerPort: 3000
     - containerPort: 9229
       name: devtools
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3000
     volumeMounts:
     - mountPath: /dbg
       name: node-debugging-support

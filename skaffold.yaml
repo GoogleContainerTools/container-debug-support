@@ -60,10 +60,7 @@ profiles:
     deploy:
       kubectl:
         manifests:
-          - integration/k8s-rbac.yaml
-          - integration/k8s-go113-connect-job.yaml
-          - integration/k8s-go114-connect-job.yaml
-          - integration/k8s-nodejs12-connect-job.yaml
+          - integration/k8s-*.yaml
 
   # prod: pushes images to production with :latest
   - name: prod
