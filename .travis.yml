@@ -1,11 +1,19 @@
 sudo: false
 services:
   - docker
+
 install: 
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
+  - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
+
 script:
   - skaffold build -p local
+
+after_success:
+  - kind create cluster
+  - export KUBECONFIG="$(kind get kubeconfig-path)"
+  - sh ./run-its.sh
