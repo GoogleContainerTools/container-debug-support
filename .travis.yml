@@ -16,4 +16,4 @@ script:
 after_success:
   - kind create cluster
   - export KUBECONFIG="$(kind get kubeconfig-path)"
-  - sh ./run-its.sh
+  - bash ./run-its.sh
