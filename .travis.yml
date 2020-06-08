@@ -15,4 +15,4 @@ script:
   - skaffold build -p local
   # we had `run-its.sh` in`after_success` but it doesn't cause failures
   # `kind create cluster` is very verbose
-  - kind create cluster >/dev/null && export && kind get kubeconfig > /tmp/kube.config && KUBECONFIG=/tmp/kube.config bash ./run-its.sh
+  - kind create cluster -q && kind get kubeconfig > /tmp/kube.config && KUBECONFIG=/tmp/kube.config bash ./run-its.sh
