@@ -57,8 +57,8 @@ spec:
         emptyDir: {}
       initContainers:
       - name: copy-kubectl
-        image: gcr.io/cloud-builders/kubectl
-        command: [sh, -c, 'cp -p /builder/google-cloud-sdk/bin/kubectl /kubectl/kubectl']
+        image: bitnami/kubectl
+        command: [sh, -c, 'cp -p /opt/bitnami/kubectl/bin/kubectl /kubectl/kubectl']
         volumeMounts:
         - mountPath: /kubectl
           name: kubectl
