@@ -12,8 +12,5 @@ install:
 
 script:
   - skaffold build -p local
-
-after_success:
-  - kind create cluster
-  - export KUBECONFIG="$(kind get kubeconfig-path)"
-  - bash ./run-its.sh
+# we had this in after_success but it doesn't cause failures
+  - kind create cluster && KUBECONFIG="$(kind get kubeconfig)" bash ./run-its.sh
