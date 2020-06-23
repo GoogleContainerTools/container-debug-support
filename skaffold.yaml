@@ -21,11 +21,7 @@ test:
     structureTests: [./test/structure-tests-nodejs.yaml]
 deploy:
   kubectl:
-    manifests:
-      # launches a busybox image with the duct-tape images as initContainers
-      # and lists the contents of /dbg: it should list out the top-level
-      # values from the initContainers
-      - test/k8s-test-installation.yaml
+    manifests: []
 
 profiles:
   # local: builds to local daemon only
@@ -33,6 +29,38 @@ profiles:
     build:
       local:
         push: false
+
+  # Set of `skaffold debug`-like integration tests
+  - name: integration
+    patches:
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go113app
+          context: integration/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.13
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go114app
+          context: integration/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.14
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: nodejs12app
+          context: integration/nodejsapp
+          docker:
+            buildArgs:
+              NODEVERSION: 12.16.0
+    deploy:
+      kubectl:
+        manifests:
+          - integration/k8s-*.yaml
 
   # prod: pushes images to production with :latest
   - name: prod

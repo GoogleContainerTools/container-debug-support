@@ -1,11 +1,18 @@
 sudo: false
 services:
   - docker
+
 install: 
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
+  - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.7.0/kind-linux-amd64
+  - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
+
 script:
   - skaffold build -p local
+  # we had `run-its.sh` in`after_success` but it doesn't cause failures
+  # `kind create cluster` is very verbose
+  - kind create cluster -q && kind get kubeconfig > /tmp/kube.config && KUBECONFIG=/tmp/kube.config bash ./run-its.sh

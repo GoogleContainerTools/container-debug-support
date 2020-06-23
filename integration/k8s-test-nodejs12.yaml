@@ -1,0 +1,59 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: nodejs12pod
+spec:
+  containers:
+  - name: nodejs12app
+    image: nodejs12app
+    env:
+      - name: NODE_DEBUG
+        value: "--inspect=9229"
+      - name: PATH
+        value: "/dbg/nodejs/bin:/usr/local/bin:/usr/bin:/bin"
+    ports:
+    - containerPort: 3000
+    - containerPort: 9229
+      name: devtools
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 3000
+    volumeMounts:
+    - mountPath: /dbg
+      name: node-debugging-support
+  initContainers:
+  - image: gcr.io/gcp-dev-tools/duct-tape/nodejs
+    name: install-node-support
+    resources: {}
+    volumeMounts:
+    - mountPath: /dbg
+      name: node-debugging-support
+  volumes:
+  - emptyDir: {}
+    name: node-debugging-support
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: connect-to-nodejs12
+  labels:
+    project: container-debug-support
+    type: integration-test
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: verify-nodejs12
+        image: bitnami/kubectl
+        command: [sh, -c, 'sleep 5;
+          kubectl port-forward pod/nodejs12pod 9229:9229 &
+          sleep 2;
+          set -x;
+          curl -i localhost:9229/json']
+
+
