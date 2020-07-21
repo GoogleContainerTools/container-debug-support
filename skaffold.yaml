@@ -10,6 +10,9 @@ build:
     context: netcore
   - image: gcr.io/gcp-dev-tools/duct-tape/nodejs
     context: nodejs
+  # ensure images are tagged with :latest
+  tagPolicy:
+    sha256: {}
 test:
   - image: gcr.io/gcp-dev-tools/duct-tape/go
     structureTests: [./test/structure-tests-go.yaml]
@@ -67,6 +70,3 @@ profiles:
     build:
       local:
         push: true
-      tagPolicy:
-        envTemplate:
-          template: '{{.IMAGE_NAME}}:latest'
