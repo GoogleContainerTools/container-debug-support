@@ -547,6 +547,12 @@ done
 			expected:    "node_modules/script.js\n--inspect\n",
 		},
 		{
+			description: "node_modules script: inspect left alone with WRAPPER_ENABLED=0",
+			args:        []string{"--inspect=9229", "./node_nodules/script.js"},
+			env:         map[string]string{"WRAPPER_ENABLED": "0"},
+			expected:    "--inspect=9229\n./node_nodules/script.js\n",
+		},
+		{
 			description: "node_modules script with inspect: seeds NODE_DEBUG",
 			args:        []string{"--inspect", "node_modules/script.js"},
 			expected:    "NODE_DEBUG=--inspect\nnode_modules/script.js\n",
