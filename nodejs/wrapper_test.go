@@ -18,6 +18,7 @@ package main
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
 	"os"
 	"path/filepath"
@@ -27,6 +28,54 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestIsEnabled(t *testing.T) {
+	tests := []struct {
+		env      map[string]string
+		expected bool
+	}{
+		{
+			env:      nil,
+			expected: true,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "1"},
+			expected: true,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "true"},
+			expected: true,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "yes"},
+			expected: true,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": ""},
+			expected: true,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "0"},
+			expected: false,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "no"},
+			expected: false,
+		},
+		{
+			env:      map[string]string{"WRAPPER_ENABLED": "false"},
+			expected: false,
+		},
+	}
+	for _, test := range tests {
+		t.Run(fmt.Sprintf("env: %v", test.env), func(t *testing.T) {
+			result := isEnabled(test.env)
+			if test.expected != result {
+				t.Errorf("expected %v but got %v", test.expected, result)
+			}
+		})
+	}
+}
 
 func TestFindScript(t *testing.T) {
 	tests := []struct {
@@ -240,37 +289,37 @@ func TestNodeContext_unwrap(t *testing.T) {
 	tests := []struct {
 		description string
 		input       nodeContext
-		noErr      bool
+		noErr       bool
 		expected    string
 	}{
 		{
 			description: "no PATH leaves unchanged",
 			input:       nodeContext{program: originalNode},
-			noErr:      false,
+			noErr:       false,
 			expected:    originalNode,
 		},
 		{
 			description: "empty PATH leaves unchanged",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": ""}},
-			noErr:      false,
+			noErr:       false,
 			expected:    originalNode,
 		},
 		{
 			description: "no other node leaves unchanged",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": root}},
-			noErr:      false,
+			noErr:       false,
 			expected:    originalNode,
 		},
 		{
 			description: "first other node wins",
 			input:       nodeContext{program: originalNode, env: map[string]string{"PATH": root + string(os.PathListSeparator) + binPath + string(os.PathListSeparator) + sbinPath}},
-			noErr:      true,
+			noErr:       true,
 			expected:    binNode,
 		},
 		{
 			description: "first node wins when original not found",
 			input:       nodeContext{program: name, env: map[string]string{"PATH": root + string(os.PathListSeparator) + binPath + string(os.PathListSeparator) + sbinPath}},
-			noErr:      true,
+			noErr:       true,
 			expected:    binNode,
 		},
 	}

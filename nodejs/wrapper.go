@@ -45,10 +45,11 @@ type nodeContext struct {
 }
 
 func main() {
-	logrus.SetLevel(logrusLevel())
+	env := envToMap(os.Environ())
+	logrus.SetLevel(logrusLevel(env))
+	
 	logrus.Debugln("Launched: ", os.Args)
 
-	env := envToMap(os.Environ())
 	// suppress npm warnings when node on PATH isn't the node used for npm
 	env["npm_config_scripts_prepend_node_path"] = "false"
 	nc := nodeContext{program: os.Args[0], args: os.Args[1:], env: env}
@@ -57,8 +58,13 @@ func main() {
 	}
 }
 
-func logrusLevel() logrus.Level {
-	v := os.Getenv("WRAPPER_VERBOSE")
+func isEnabled(env map[string]string) bool {
+	v, found := env["WRAPPER_ENABLED"]
+	return !found || (v != "0" && v != "false" && v != "no")
+}
+
+func logrusLevel(env map[string]string) logrus.Level {
+	v := env["WRAPPER_VERBOSE"]
 	if v != "" {
 		if l, err := logrus.ParseLevel(v); err == nil {
 			return l
@@ -73,6 +79,11 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 		return fmt.Errorf("could not unwrap: %w", err)
 	}
 	logrus.Debugln("unwrapped: ", nc.program)
+	
+	if !isEnabled(nc.env) {
+		logrus.Info("wrapper disabled")
+		return nc.exec(stdin, stdout, stderr)
+	}
 
 	// Use an absolute path in case we're being run within a node_modules directory
 	// If there's an error, then hand off immediately to the real node.
