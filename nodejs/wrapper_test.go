@@ -146,6 +146,30 @@ func TestIsApplicationScript(t *testing.T) {
 	}
 }
 
+func TestIsAllowedNodeModule(t *testing.T) {
+	tests := []struct {
+		script   string
+		env      map[string]string
+		expected bool
+	}{
+		{"./node_modules/lib/script.js", nil, false},
+		{"./node_modules/.bin/next", nil, true},
+		{"node_modules/nodemon/nodemon.js", nil, false},
+		{"node_modules/nodemon/nodemon.js", map[string]string{"WRAPPER_ALLOWED": "foo bar"}, false},
+		{"node_modules/nodemon/nodemon.js", map[string]string{"WRAPPER_ALLOWED": "nodemon/nodemon.js"}, true},
+		{"node_modules/nodemon/nodemon.js", map[string]string{"WRAPPER_ALLOWED": "foo nodemon/nodemon.js bar"}, true},
+	}
+
+	for _, test := range tests {
+		t.Run(test.script, func(t *testing.T) {
+			result := isAllowedNodeModule(test.script, test.env)
+			if result != test.expected {
+				t.Errorf("expected %v but got %v", test.expected, result)
+			}
+		})
+	}
+}
+
 func TestEnvFromMap(t *testing.T) {
 	tests := []struct {
 		description string
@@ -535,7 +559,7 @@ done
 		},
 
 		// node_module scripts should have --inspect stripped and propagated,
-		// and NODE_DEBUG should never be overwritten
+		// and NODE_DEBUG should never be overwritten, EXCEPT for allowed modules
 		{
 			description: "node_modules script: passed through",
 			args:        []string{"node_modules/script.js"},
@@ -550,6 +574,17 @@ done
 			description: "node_modules script: inspect left alone with WRAPPER_ENABLED=0",
 			args:        []string{"--inspect=9229", "./node_nodules/script.js"},
 			env:         map[string]string{"WRAPPER_ENABLED": "0"},
+			expected:    "--inspect=9229\n./node_nodules/script.js\n",
+		},
+		{
+			description: "node_modules script: inspect left alone for next.js launcher",
+			args:        []string{"--inspect=9229", "./node_nodules/.bin/next"},
+			expected:    "--inspect=9229\n./node_nodules/.bin/next\n",
+		},
+		{
+			description: "node_modules script: inspect left alone with WRAPPER_ALLOWED=script.js",
+			args:        []string{"--inspect=9229", "./node_nodules/script.js"},
+			env:         map[string]string{"WRAPPER_ALLOWED": "script.js"},
 			expected:    "--inspect=9229\n./node_nodules/script.js\n",
 		},
 		{

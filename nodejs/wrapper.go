@@ -22,6 +22,11 @@ limitations under the License.
 // script, this wrapper strips out and propagates `--inspect`-like arguments
 // via `NODE_DEBUG`.  When executing an app script, this wrapper then inlines
 // the `NODE_DEBUG` when found.
+// 
+// A certain set of node_modules scripts are treated as if they are application scripts.
+// The WRAPPER_ALLOWED environment variable allows identifying node_modules scripts
+// that should be treated as application scripts, meaning that they load and execute
+// the user's scripts directly. 
 package main
 
 import (
@@ -37,6 +42,9 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+// the next.js launcher loads user scripts directly
+var allowedNodeModules = []string{"node_modules/.bin/next"}
+
 // nodeContext allows manipulating the launch context for node.
 type nodeContext struct {
 	program string
@@ -47,7 +55,7 @@ type nodeContext struct {
 func main() {
 	env := envToMap(os.Environ())
 	logrus.SetLevel(logrusLevel(env))
-	
+
 	logrus.Debugln("Launched: ", os.Args)
 
 	// suppress npm warnings when node on PATH isn't the node used for npm
@@ -79,31 +87,36 @@ func run(nc *nodeContext, stdin io.Reader, stdout, stderr io.Writer) error {
 		return fmt.Errorf("could not unwrap: %w", err)
 	}
 	logrus.Debugln("unwrapped: ", nc.program)
-	
+
 	if !isEnabled(nc.env) {
 		logrus.Info("wrapper disabled")
 		return nc.exec(stdin, stdout, stderr)
 	}
 
-	// Use an absolute path in case we're being run within a node_modules directory
-	// If there's an error, then hand off immediately to the real node.
+	// script may be "" such as when the script is piped in through stdin
 	script := findScript(nc.args)
-	if abs, err := filepath.Abs(script); err == nil {
-		script = abs
-	} else {
-		logrus.Warn("could not access script: ", err)
-		return nc.exec(stdin, stdout, stderr)
-	}		
+	if script != "" {
+		// Use an absolute path in case we're being run within a node_modules directory
+		// If there's an error, then hand off immediately to the real node.
+		if abs, err := filepath.Abs(script); err == nil {
+			script = abs
+		} else {
+			logrus.Warn("could not access script: ", err)
+			return nc.exec(stdin, stdout, stderr)
+		}
+	}
 	logrus.Debugln("script: ", script)
 
+	// If NODE_DEBUG is set then our parent process was this wrapper, and
+	// NODE_DEBUG contains the --inspect* argument provided back then.
 	nodeDebugOption, hasNodeDebug := nc.env["NODE_DEBUG"]
 	if hasNodeDebug {
 		logrus.Debugln("found NODE_DEBUG=", nodeDebugOption)
 	}
 
-	// if we're about to execute the application script, install the NODE_DEBUG
+	// If we're about to execute the application script, install the NODE_DEBUG
 	// arguments if found and go
-	if isApplicationScript(script) || script == "" {
+	if script == "" || isApplicationScript(script) || isAllowedNodeModule(script, nc.env) {
 		if hasNodeDebug {
 			nc.stripInspectArgs() // top-level debug options win
 			nc.addNodeArg(nodeDebugOption)
@@ -253,6 +266,23 @@ func isApplicationScript(path string) bool {
 	// We could consider checking if the parent's base name is `bin`?
 	return !strings.HasPrefix(path, "node_modules/") && !strings.Contains(path, "/node_modules/") &&
 		!strings.HasSuffix(path, "/bin/npm")
+}
+
+// isAllowedNodeModule returns true if the script is an allowed node_module, meaning
+// one that is or directly launches the user's code.
+func isAllowedNodeModule(path string, env map[string]string) bool {
+	allowedList := allowedNodeModules
+	if v, found := env["WRAPPER_ALLOWED"]; found {
+		split := strings.Split(v, " ")
+		allowedList = append(allowedList, split...) 
+	}
+	for _, allowed := range allowedList {
+		if strings.HasSuffix(path, allowed) {
+			logrus.Infof("script %q matches %q from allowed node_modules", path, allowed)
+			return true
+		}
+	}
+	return false
 }
 
 // envToMap turns a set of VAR=VALUE strings to a map.
