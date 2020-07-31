@@ -1,6 +1,6 @@
-FROM golang:1.14.3 as delve
+FROM golang:1.14.6 as delve
 
-ARG DELVE_VERSION=1.4.1
+ARG DELVE_VERSION=1.5.0
 
 RUN curl --location --output delve-$DELVE_VERSION.tar.gz https://github.com/go-delve/delve/archive/v$DELVE_VERSION.tar.gz \
   && tar xzf delve-$DELVE_VERSION.tar.gz \
