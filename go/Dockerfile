@@ -1,4 +1,4 @@
-FROM golang:1.14.6 as delve
+FROM golang:1.15 as delve
 
 ARG DELVE_VERSION=1.5.0
 
