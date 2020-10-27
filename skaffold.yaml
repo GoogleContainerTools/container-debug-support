@@ -55,6 +55,14 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
+          image: go115app
+          context: integration/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.15
+      - op: add
+        path: /build/artifacts/-
+        value:
           image: nodejs12app
           context: integration/nodejsapp
           docker:
