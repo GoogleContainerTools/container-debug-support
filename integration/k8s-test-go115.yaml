@@ -28,7 +28,7 @@ spec:
     - mountPath: /dbg
       name: go-debugging-support
   initContainers:
-  - image: gcr.io/gcp-dev-tools/duct-tape/go
+  - image: skaffold-debug-go
     name: install-go-support
     resources: {}
     volumeMounts:
@@ -64,7 +64,7 @@ spec:
           name: kubectl
       containers:
       - name: dlv-to-go115
-        image: gcr.io/gcp-dev-tools/duct-tape/go
+        image: skaffold-debug-go
         command: [sh, -c, 'sleep 5;
           /kubectl/kubectl port-forward pod/go115pod 56286:56286 &
           sleep 2;

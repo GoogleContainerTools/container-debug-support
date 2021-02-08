@@ -23,7 +23,7 @@ spec:
     - mountPath: /dbg
       name: node-debugging-support
   initContainers:
-  - image: gcr.io/gcp-dev-tools/duct-tape/nodejs
+  - image: skaffold-debug-nodejs
     name: install-node-support
     resources: {}
     volumeMounts:
