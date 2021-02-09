@@ -2,25 +2,25 @@ apiVersion: skaffold/v1beta9
 kind: Config
 build:
   artifacts:
-  - image: go
+  - image: skaffold-debug-go
     context: go
-  - image: python
+  - image: skaffold-debug-python
     context: python
-  - image: netcore
+  - image: skaffold-debug-netcore
     context: netcore
-  - image: nodejs
+  - image: skaffold-debug-nodejs
     context: nodejs
   # ensure images are tagged with :latest
   tagPolicy:
     sha256: {}
 test:
-  - image: go
+  - image: skaffold-debug-go
     structureTests: [./test/structure-tests-go.yaml]
-  - image: python
+  - image: skaffold-debug-python
     structureTests: [./test/structure-tests-python.yaml]
-  - image: netcore
+  - image: skaffold-debug-netcore
     structureTests: [./test/structure-tests-netcore.yaml]
-  - image: nodejs
+  - image: skaffold-debug-nodejs
     structureTests: [./test/structure-tests-nodejs.yaml]
 deploy:
   kubectl:
@@ -78,3 +78,44 @@ profiles:
     build:
       local:
         push: true
+
+  # Use short (deprecated) image names: images were renamed so they were
+  # more easily distinguished from other images with similar names.
+  - name: deprecated-names
+    patches:
+      - op: replace
+        path: /build/artifacts/0/image
+        from: skaffold-debug-go
+        value: go
+      - op: replace
+        path: /test/0/image
+        from: skaffold-debug-go
+        value: go
+
+      - op: replace
+        path: /build/artifacts/1/image
+        from: skaffold-debug-python
+        value: python
+      - op: replace
+        path: /test/1/image
+        from: skaffold-debug-python
+        value: python
+
+      - op: replace
+        path: /build/artifacts/2/image
+        from: skaffold-debug-netcore
+        value: netcore
+      - op: replace
+        path: /test/2/image
+        from: skaffold-debug-netcore
+        value: netcore
+
+      - op: replace
+        path: /build/artifacts/3/image
+        from: skaffold-debug-nodejs
+        value: nodejs
+      - op: replace
+        path: /test/3/image
+        from: skaffold-debug-nodejs
+        value: nodejs
+
