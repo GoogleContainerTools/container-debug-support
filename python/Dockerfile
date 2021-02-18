@@ -46,7 +46,7 @@ RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.9 pip install --user pydevd
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.9 pip install --user pydevd-pycharm
 
 FROM golang:1.14.1 as build
-COPY . .
+COPY launcher/ .
 # Produce an as-static-as-possible wrapper binary to work on musl and glibc
 RUN GOPATH="" CGO_ENABLED=0 go build -o launcher -ldflags '-s -w -extldflags "-static"' .
 
