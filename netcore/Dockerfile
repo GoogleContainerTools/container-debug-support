@@ -5,7 +5,9 @@ RUN apt-get update \
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
-FROM busybox
+FROM --platform=$BUILDPLATFORM busybox
+ARG BUILDPLATFORM
+
 # The install script copies all files in /duct-tape to /dbg
 COPY install.sh /
 CMD ["/bin/sh", "/install.sh"]

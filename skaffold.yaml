@@ -1,15 +1,38 @@
-apiVersion: skaffold/v1beta9
+apiVersion: skaffold/v2beta12
 kind: Config
+
+# YAML alias to use `docker buildx` for building multiple platforms
+.YamlAnchors:
+  _buildx: &buildx
+    custom:
+      buildCommand:
+        if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
+          docker buildx create --name skaffold-builder --platform linux/amd64,linux/arm64;
+        fi;
+        loadOrPush=$(if [ "$PUSH_IMAGE" = true ]; then echo --platform linux/arm64,linux/amd64 --push; else echo --load; fi)
+        set -x;
+        docker buildx build
+          --builder skaffold-builder
+          $loadOrPush
+          --tag $IMAGE
+          "$BUILD_CONTEXT"
+
 build:
+  local:
+    useBuildkit: true
   artifacts:
   - image: skaffold-debug-go
     context: go
+    <<: *buildx
   - image: skaffold-debug-python
     context: python
+    <<: *buildx
   - image: skaffold-debug-netcore
     context: netcore
+    <<: *buildx
   - image: skaffold-debug-nodejs
     context: nodejs
+    <<: *buildx
   # ensure images are tagged with :latest
   tagPolicy:
     sha256: {}
@@ -68,6 +91,14 @@ profiles:
           docker:
             buildArgs:
               NODEVERSION: 12.16.0
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: kubectl
+          context: integration/kubectl
+          docker:
+            buildArgs:
+              GOVERSION: 1.16
     deploy:
       kubectl:
         manifests:

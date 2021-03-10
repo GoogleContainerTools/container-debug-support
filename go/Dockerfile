@@ -1,4 +1,8 @@
-FROM golang:1.15 as delve
+ARG GOVERSION=1.16
+FROM --platform=$BUILDPLATFORM golang:${GOVERSION} as delve
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 
 ARG DELVE_VERSION=1.6.0
 
@@ -15,11 +19,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
   && patch -p0 -d delve-source < delve-only-same-user.patch
 
 # Produce an as-static-as-possible dlv binary to work on musl and glibc
-RUN cd delve-source && CGO_ENABLED=0 go build -o /go/dlv -ldflags '-s -w -extldflags "-static"' ./cmd/dlv/
+RUN cd delve-source && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /go/dlv -ldflags '-s -w -extldflags "-static"' ./cmd/dlv/
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
-FROM busybox
+FROM --platform=$BUILDPLATFORM busybox
 # The install script copies all files in /duct-tape to /dbg
 COPY install.sh /
 CMD ["/bin/sh", "/install.sh"]
