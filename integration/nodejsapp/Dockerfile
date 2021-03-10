@@ -1,5 +1,5 @@
 ARG NODEVERSION
-FROM node:${NODEVERSION}-alpine3.10
+FROM node:${NODEVERSION}-alpine
 
 USER node
 RUN mkdir /home/node/app
@@ -11,5 +11,5 @@ ENV NODE_ENV $ENV
 CMD npm run $NODE_ENV
 
 COPY --chown=node:node package* ./
-RUN npm ci
+RUN npm install
 COPY --chown=node:node . .
