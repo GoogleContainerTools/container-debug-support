@@ -3,6 +3,7 @@ services:
   - docker
 
 install: 
+  - sh ./hack/enable-docker-buildkit.sh
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
