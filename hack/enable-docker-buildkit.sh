@@ -5,10 +5,10 @@ if [ -f /etc/docker/daemon.json ]; then
     echo "/etc/docker/daemon.json was:"
     sed 's/^/> /' /etc/docker/daemon.json
     echo "/etc/docker/daemon.json now:"
-    jq '.+{"experimental":"enabled"}' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json
+    jq '.+{"experimental":true}' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json
 else
     echo "/etc/docker/daemon.json now:"
-    echo '{"experimental":"enabled"}' | sudo tee /etc/docker/daemon.json
+    echo '{"experimental":true}' | sudo tee /etc/docker/daemon.json
 fi
 sudo chown travis:travis /etc/docker/daemon.json
 sudo systemctl restart docker || (sudo systemctl status docker.service; sudo journalctl -xe)
