@@ -11,5 +11,8 @@ else
     echo '{"experimental":true}' | sudo tee /etc/docker/daemon.json
 fi
 sudo chown travis:travis /etc/docker/daemon.json
-sudo systemctl restart docker || (sudo systemctl status docker.service; sudo journalctl -xe)
+echo "Restarting docker..."
+sudo systemctl restart docker || (echo "Failed!"; sudo journalctl -xe; exit 1)
+sudo systemctl status docker.service
 
+docker info
