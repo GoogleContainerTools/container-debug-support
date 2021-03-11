@@ -11,4 +11,4 @@ else
     echo '{"experimental":"enabled"}' | sudo tee /etc/docker/daemon.json
 fi
 sudo chown travis:travis /etc/docker/daemon.json
-sudo service docker restart
+sudo service docker restart || (systemctl status docker.service; journalctl -xe)
