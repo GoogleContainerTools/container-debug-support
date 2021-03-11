@@ -3,7 +3,7 @@
 
 if [ -f /etc/docker/daemon.json ]; then
     echo "/etc/docker/daemon.json was:"
-    sed 's/^/> /etc/docker/daemon.json
+    sed 's/^/> /' /etc/docker/daemon.json
     echo "/etc/docker/daemon.json now:"
     jq '.+{"experimental":"enabled"}' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json
 else
