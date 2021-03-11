@@ -86,6 +86,14 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
+          image: go116app
+          context: integration/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.16
+      - op: add
+        path: /build/artifacts/-
+        value:
           image: nodejs12app
           context: integration/nodejsapp
           docker:
@@ -102,7 +110,12 @@ profiles:
     deploy:
       kubectl:
         manifests:
-          - integration/k8s-*.yaml
+          - integration/k8s-rbac.yaml
+          - integration/k8s-test-go113.yaml
+          - integration/k8s-test-go114.yaml
+          - integration/k8s-test-go115.yaml
+          - integration/k8s-test-go116.yaml
+          - integration/k8s-test-nodejs12.yaml
 
   # prod: pushes images to production with :latest
   - name: prod

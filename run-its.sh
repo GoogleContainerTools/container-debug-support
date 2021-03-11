@@ -12,7 +12,7 @@ skaffoldPid=$!
 trap "echo '>> Tearing down test jobs [$(date)]'; kill $skaffoldPid; skaffold delete -p integration" 0 1 3 15
 
 echo ">> Waiting for test jobs to start [$(date)]"
-# 4 tests = go 1.13 1.14 1.15 + nodejs 12
+# 5 tests = go 1.13 1.14 1.15 1.16 + nodejs 12
 while [ $(kubectl get job.batch -o name | wc -l) -lt 5 ]; do
     sleep 5
 done
