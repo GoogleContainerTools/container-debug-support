@@ -1,7 +1,14 @@
+# This test approximates `skaffold debug` for a nodejs app.
+# Must use `kubectl port-forward` as we can't seem to expose
+# the node inspector using a service.
 apiVersion: v1
 kind: Pod
 metadata:
   name: nodejs12pod
+  labels:
+    app: hello
+    protocol: devtools
+    runtime: nodejs12
 spec:
   containers:
   - name: nodejs12app
@@ -34,6 +41,25 @@ spec:
     name: node-debugging-support
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-devtools-nodejs12
+spec:
+  ports:
+  - name: http
+    port: 3000
+    protocol: TCP
+  # Can't seem access node inspector via a service
+  #- name: devtools
+  #  port: 9229
+  #  protocol: TCP
+  selector:
+    app: hello
+    protocol: devtools
+    runtime: nodejs12
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -47,13 +73,14 @@ spec:
   template:
     spec:
       restartPolicy: Never
+      initContainers:
+      # wait for the normal app to be available
+      - name: wait-for-nodejs12pod
+        image: kubectl
+        command: [sh, -c, "while ! curl -s hello-devtools-nodejs12:3000 2>/dev/null; do echo waiting for app; sleep 1; done"]
       containers:
       - name: verify-nodejs12
-        image: bitnami/kubectl
-        command: [sh, -c, 'sleep 5;
-          kubectl port-forward pod/nodejs12pod 9229:9229 &
-          sleep 2;
-          set -x;
-          curl -i localhost:9229/json']
+        image: kubectl
+        command: [sh, -c, 'kubectl port-forward pod/nodejs12pod 9229 & sleep 5; curl -is localhost:9229/json/version']
 
 

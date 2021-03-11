@@ -1,7 +1,12 @@
+# This test approximates `skaffold debug` for a go app.
 apiVersion: v1
 kind: Pod
 metadata:
   name: go115pod
+  labels:
+    app: hello
+    protocol: dlv
+    runtime: go115
 spec:
   containers:
   - name: go115app
@@ -13,7 +18,8 @@ spec:
     - --headless
     - --continue
     - --accept-multiclient
-    - --listen=localhost:56286
+    # listen on 0.0.0.0 as it is exposed as a service
+    - --listen=0.0.0.0:56286
     - --api-version=2
     - ./app
     ports:
@@ -39,6 +45,24 @@ spec:
     name: go-debugging-support
 
 ---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-dlv-go115
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+  - name: dlv
+    port: 56286
+    protocol: TCP
+  selector:
+    app: hello
+    protocol: dlv
+    runtime: go115
+
+---
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -52,27 +76,16 @@ spec:
   template:
     spec:
       restartPolicy: Never
-      volumes:
-      - name: kubectl
-        emptyDir: {}
       initContainers:
-      - name: copy-kubectl
-        image: bitnami/kubectl
-        command: [sh, -c, 'cp -p /opt/bitnami/kubectl/bin/kubectl /kubectl/kubectl']
-        volumeMounts:
-        - mountPath: /kubectl
-          name: kubectl
+      - name: wait-for-go115pod
+        image: kubectl
+        command: [sh, -c, "while ! curl -s hello-dlv-go115:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
       containers:
       - name: dlv-to-go115
         image: skaffold-debug-go
-        command: [sh, -c, 'sleep 5;
-          /kubectl/kubectl port-forward pod/go115pod 56286:56286 &
-          sleep 2;
+        command: [sh, -c, '
           (echo bt; echo exit -c) > init.txt;
           set -x;
-          /duct-tape/go/bin/dlv connect --init init.txt localhost:56286']
-        volumeMounts:
-        - mountPath: /kubectl
-          name: kubectl
+          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go115:56286']
 
 
