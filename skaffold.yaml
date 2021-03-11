@@ -46,6 +46,8 @@ test:
   - image: skaffold-debug-nodejs
     structureTests: [./test/structure-tests-nodejs.yaml]
 deploy:
+  logs:
+    prefix: auto
   kubectl:
     manifests: []
 
