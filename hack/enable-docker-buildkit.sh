@@ -34,5 +34,3 @@ echo ">> installing docker-buildx"
 mkdir -vp $HOME/.docker/cli-plugins/
 curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-amd64" > $HOME/.docker/cli-plugins/docker-buildx
 chmod a+x $HOME/.docker/cli-plugins/docker-buildx
-
-docker info
