@@ -1,5 +1,5 @@
 ARG NODEVERSION
-FROM node:${NODEVERSION}-alpine3.10
+FROM node:${NODEVERSION}-alpine
 
 USER node
 RUN mkdir /home/node/app

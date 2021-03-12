@@ -1,6 +1,12 @@
 sudo: false
+dist: bionic
+lang: bash
 services:
   - docker
+
+before_install: 
+  - sh hack/enable-docker-buildkit.sh
+  - docker info
 
 install: 
   - mkdir -p $HOME/bin

@@ -1,5 +1,5 @@
 # Simple RBAC required to enable use of `kubectl port-forward`
-# from within a contaier.
+# from within a container.
 apiVersion: rbac.authorization.k8s.io/v1beta1
 kind: ClusterRoleBinding
 metadata:
