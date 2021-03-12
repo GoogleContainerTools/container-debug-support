@@ -114,10 +114,10 @@ profiles:
       kubectl:
         manifests:
           - integration/k8s-rbac.yaml
-          #- integration/k8s-test-go113.yaml
-          #- integration/k8s-test-go114.yaml
-          #- integration/k8s-test-go115.yaml
-          #- integration/k8s-test-go116.yaml
+          - integration/k8s-test-go113.yaml
+          - integration/k8s-test-go114.yaml
+          - integration/k8s-test-go115.yaml
+          - integration/k8s-test-go116.yaml
           - integration/k8s-test-nodejs12.yaml
 
   # prod: pushes images to production with :latest
