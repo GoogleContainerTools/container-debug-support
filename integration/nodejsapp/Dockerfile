@@ -11,5 +11,5 @@ ENV NODE_ENV $ENV
 CMD npm run $NODE_ENV
 
 COPY --chown=node:node package* ./
-RUN npm ci
+RUN npm install
 COPY --chown=node:node . .
