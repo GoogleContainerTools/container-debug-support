@@ -17,6 +17,9 @@ fileExistenceTests:
     path: '/duct-tape/python/lib/python3.9/site-packages/ptvsd/__init__.py'
   - name: 'debugpy for python 3.9'
     path: '/duct-tape/python/lib/python3.9/site-packages/debugpy/__init__.py'
+  - name: 'python launcher'
+    path: '/duct-tape/python/launcher'
+    isExecutableBy: any
 
 commandTests:
   - name: "run with no /dbg should fail"

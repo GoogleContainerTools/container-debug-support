@@ -65,6 +65,15 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
+          image: kubectl
+          context: integration/kubectl
+          docker:
+            buildArgs:
+              GOVERSION: 1.16
+
+      - op: add
+        path: /build/artifacts/-
+        value:
           image: go113app
           context: integration/goapp
           docker:
@@ -102,14 +111,21 @@ profiles:
           docker:
             buildArgs:
               NODEVERSION: 12.16.0
+
       - op: add
         path: /build/artifacts/-
         value:
-          image: kubectl
-          context: integration/kubectl
+          image: pydevconnect
+          context: python/pydevconnect
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: python39app
+          context: integration/pythonapp
           docker:
             buildArgs:
-              GOVERSION: 1.16
+              PYTHONVERSION: 3.9
+
     deploy:
       kubectl:
         manifests:

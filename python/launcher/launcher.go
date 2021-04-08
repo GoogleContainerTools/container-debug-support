@@ -87,6 +87,7 @@ func main() {
 	ctx := context.Background()
 	env := EnvFromPairs(os.Environ())
 	logrus.SetLevel(logrusLevel(env))
+	logrus.Debug("launcher args:", os.Args[1:])
 
 	pc := pythonContext{env: env}
 	flag.StringVar(&dbgRoot, "helpers", "/dbg", "base location for skaffold-debug helpers")
@@ -137,10 +138,11 @@ func (pc *pythonContext) launch(ctx context.Context) error {
 		return err
 	}
 
-	// set PYTHONPATH to point to the appropriate library for the given python version
+	// set PYTHONPATH to point to the appropriate library for the given python version.
 	if err := pc.updateEnv(ctx); err != nil {
 		return err
 	}
+	// so pc.args[0] should be the python interpreter
 
 	if err := pc.updateCommandLine(ctx); err != nil {
 		return err
@@ -261,13 +263,9 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 	case ModePydevd:
 		libraryPath := fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
 		pc.env.PrependFilepath("PYTHONPATH", libraryPath)
-		binPath := fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/bin", major, minor)
-		pc.env.PrependFilepath("PATH", binPath)
 	case ModePydevdPycharm:
 		libraryPath := fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
 		pc.env.PrependFilepath("PYTHONPATH", libraryPath)
-		binPath := fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/bin", major, minor)
-		pc.env.PrependFilepath("PATH", binPath)
 	}
 
 	return nil
@@ -297,7 +295,8 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 	case ModePydevd, ModePydevdPycharm:
 		// Appropriate location to resolve pydevd is set in updateEnv
 		// TODO: check for modules (and fail?)
-		cmdline = []string{"pydevd", "--port", strconv.Itoa(int(pc.port)), "--server"}
+		cmdline = append(cmdline, pc.args[0])
+		cmdline = append(cmdline, "-m", "pydevd", "--port", strconv.Itoa(int(pc.port)), "--server")
 		if pc.env["WRAPPER_VERBOSE"] != "" {
 			cmdline = append(cmdline, "--DEBUG")
 		}
@@ -306,7 +305,7 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 			cmdline = append(cmdline, "--multiproc")
 		}
 		cmdline = append(cmdline, "--file") // --file is expected as last argument
-		cmdline = append(cmdline, pc.args...)
+		cmdline = append(cmdline, pc.args[1:]...)
 		if pc.wait {
 			logrus.Warn("pydevd does not support wait-for-client")
 		}
