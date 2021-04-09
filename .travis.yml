@@ -18,7 +18,7 @@ install:
   - export PATH=$HOME/bin:$PATH
 
 script:
-  - skaffold build -p local
+  - skaffold build
 
   # Create a kind configuration to use the docker daemon's configured
   # registry-mirrors.
