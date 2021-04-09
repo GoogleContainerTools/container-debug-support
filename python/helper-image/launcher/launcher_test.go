@@ -272,8 +272,8 @@ func TestLaunch(t *testing.T) {
 			description: "pydevd",
 			pc:          pythonContext{debugMode: "pydevd", port: 2345, wait: false, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
-				AndRunCmd([]string{"pydevd", "--port", "2345", "--server", "--file", "app.py"}),
-			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: false, args: []string{"pydevd", "--port", "2345", "--server", "--file", "app.py"}, env: env{"PATH": dbgRoot + "/python/pydevd/python3.7/bin", "PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
+				AndRunCmd([]string{"python", "-m", "pydevd", "--port", "2345", "--server", "--file", "app.py"}),
+			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: false, args: []string{"python", "-m", "pydevd", "--port", "2345", "--server", "--file", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
 		},
 	}
 
