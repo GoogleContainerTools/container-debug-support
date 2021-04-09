@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta12
+apiVersion: skaffold/v2beta13
 kind: Config
 metadata:
   name: python
@@ -21,6 +21,10 @@ build:
 test:
   - image: skaffold-debug-python
     structureTests: [structure-tests-python.yaml]
+    custom:
+      - command: "cd helper-image/launcher; go test ."
+        dependencies:
+          paths: ["helper-image/launcher/*.go"]
 
 deploy:
   logs:
