@@ -20,7 +20,7 @@ build:
 
 test:
   - image: skaffold-debug-go
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-go.yaml]
 
 deploy:
   logs:

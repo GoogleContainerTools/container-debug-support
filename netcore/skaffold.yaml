@@ -20,7 +20,7 @@ build:
 
 test:
   - image: skaffold-debug-netcore
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-netcore.yaml]
 
 deploy:
   logs:

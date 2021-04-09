@@ -20,7 +20,7 @@ build:
 
 test:
   - image: skaffold-debug-python
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-python.yaml]
 
 deploy:
   logs:

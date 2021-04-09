@@ -20,7 +20,7 @@ build:
 
 test:
   - image: skaffold-debug-nodejs
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-nodejs.yaml]
 
 deploy:
   logs:
