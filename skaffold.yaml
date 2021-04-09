@@ -1,168 +1,23 @@
 apiVersion: skaffold/v2beta12
 kind: Config
+metadata:
+  name: container-debug-support
 
-# YAML alias to use `docker buildx` for building multiple platforms
 .YamlAnchors:
-  _buildx: &buildx
-    custom:
-      buildCommand:
-        if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
-          echo ">> creating "docker buildx" builder 'skaffold-builder'";
-          docker buildx create --name skaffold-builder --platform linux/amd64,linux/arm64;
-        fi;
-        loadOrPush=$(if [ "$PUSH_IMAGE" = true ]; then echo --platform linux/arm64,linux/amd64 --push; else echo --load; fi)
-        set -x;
-        docker buildx build
-          --builder skaffold-builder
-          $loadOrPush
-          --tag $IMAGE
-          "$BUILD_CONTEXT"
+  _integration: &integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
 
-build:
-  local:
-    useBuildkit: true
-  artifacts:
-  - image: skaffold-debug-go
-    context: go
-    <<: *buildx
-  - image: skaffold-debug-python
-    context: python
-    <<: *buildx
-  - image: skaffold-debug-netcore
-    context: netcore
-    <<: *buildx
-  - image: skaffold-debug-nodejs
-    context: nodejs
-    <<: *buildx
-  # ensure images are tagged with :latest
-  tagPolicy:
-    sha256: {}
-test:
-  - image: skaffold-debug-go
-    structureTests: [./test/structure-tests-go.yaml]
-  - image: skaffold-debug-python
-    structureTests: [./test/structure-tests-python.yaml]
-  - image: skaffold-debug-netcore
-    structureTests: [./test/structure-tests-netcore.yaml]
-  - image: skaffold-debug-nodejs
-    structureTests: [./test/structure-tests-nodejs.yaml]
-deploy:
-  logs:
-    prefix: auto
-  kubectl:
-    manifests: []
+requires:
+- path: go
+  <<: *integration
+- path: netcore
+  <<: *integration
+- path: nodejs
+  <<: *integration
+- path: python
+  <<: *integration
 
 profiles:
-  # local: builds to local daemon only
-  - name: local
-    build:
-      local:
-        push: false
-
-  # Set of `skaffold debug`-like integration tests
-  - name: integration
-    patches:
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go113app
-          context: integration/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.13
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go114app
-          context: integration/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.14
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go115app
-          context: integration/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.15
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go116app
-          context: integration/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.16
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: nodejs12app
-          context: integration/nodejsapp
-          docker:
-            buildArgs:
-              NODEVERSION: 12.16.0
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: kubectl
-          context: integration/kubectl
-          docker:
-            buildArgs:
-              GOVERSION: 1.16
-    deploy:
-      kubectl:
-        manifests:
-          - integration/k8s-rbac.yaml
-          - integration/k8s-test-go113.yaml
-          - integration/k8s-test-go114.yaml
-          - integration/k8s-test-go115.yaml
-          - integration/k8s-test-go116.yaml
-          - integration/k8s-test-nodejs12.yaml
-
-  # prod: pushes images to production with :latest
-  - name: prod
-    build:
-      local:
-        push: true
-
-  # Use short (deprecated) image names: images were renamed so they were
-  # more easily distinguished from other images with similar names.
-  - name: deprecated-names
-    patches:
-      - op: replace
-        path: /build/artifacts/0/image
-        from: skaffold-debug-go
-        value: go
-      - op: replace
-        path: /test/0/image
-        from: skaffold-debug-go
-        value: go
-
-      - op: replace
-        path: /build/artifacts/1/image
-        from: skaffold-debug-python
-        value: python
-      - op: replace
-        path: /test/1/image
-        from: skaffold-debug-python
-        value: python
-
-      - op: replace
-        path: /build/artifacts/2/image
-        from: skaffold-debug-netcore
-        value: netcore
-      - op: replace
-        path: /test/2/image
-        from: skaffold-debug-netcore
-        value: netcore
-
-      - op: replace
-        path: /build/artifacts/3/image
-        from: skaffold-debug-nodejs
-        value: nodejs
-      - op: replace
-        path: /test/3/image
-        from: skaffold-debug-nodejs
-        value: nodejs
-
+- name: integration

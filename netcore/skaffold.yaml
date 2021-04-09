@@ -1,0 +1,66 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: netcore
+
+requires:
+- path: ../integration
+  activeProfiles:
+   - name: integration
+     activatedBy: [integration]
+
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+  - image: skaffold-debug-netcore
+    context: helper-image
+    custom:
+      buildCommand: ../../buildx.sh
+  # ensure images are tagged with :latest
+  tagPolicy:
+    sha256: {}
+
+test:
+  - image: skaffold-debug-netcore
+    structureTests: [structure-tests.yaml]
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []
+
+profiles:
+  # local: builds to local daemon only
+  - name: local
+    build:
+      local:
+        push: false
+
+  # Set of `skaffold debug`-like integration tests
+  - name: integration
+  #  #patches:
+  #  deploy:
+  #    kubectl:
+  #      manifests:
+  #        - integration/k8s-test-netcore.yaml
+
+  # prod: pushes images to production with :latest
+  - name: prod
+    build:
+      local:
+        push: true
+
+  # Use short (deprecated) image names: images were renamed so they were
+  # more easily distinguished from other images with similar names.
+  - name: deprecated-names
+    patches:
+      - op: replace
+        path: /build/artifacts/0/image
+        from: skaffold-debug-netcore
+        value: netcore
+      - op: replace
+        path: /test/0/image
+        from: skaffold-debug-netcore
+        value: netcore
