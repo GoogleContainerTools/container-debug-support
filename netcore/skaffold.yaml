@@ -4,10 +4,10 @@ metadata:
   name: netcore
 
 requires:
-- path: ../integration
-  activeProfiles:
-   - name: integration
-     activatedBy: [integration]
+  - path: ../integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
 
 build:
   local:
@@ -17,13 +17,10 @@ build:
     context: helper-image
     custom:
       buildCommand: ../../buildx.sh
-  # ensure images are tagged with :latest
-  tagPolicy:
-    sha256: {}
 
 test:
   - image: skaffold-debug-netcore
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-netcore.yaml]
 
 deploy:
   logs:
@@ -32,28 +29,21 @@ deploy:
     manifests: []
 
 profiles:
-  # local: builds to local daemon only
-  - name: local
-    build:
-      local:
-        push: false
-
-  # Set of `skaffold debug`-like integration tests
+  # integration: set of `skaffold debug`-like integration tests
   - name: integration
-  #  #patches:
-  #  deploy:
-  #    kubectl:
-  #      manifests:
-  #        - integration/k8s-test-netcore.yaml
+    # No integration tests for netcore yet
 
-  # prod: pushes images to production with :latest
-  - name: prod
+  # release: pushes images to production with :latest
+  - name: release
     build:
       local:
         push: true
+      tagPolicy:
+        sha256: {}
 
-  # Use short (deprecated) image names: images were renamed so they were
-  # more easily distinguished from other images with similar names.
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
   - name: deprecated-names
     patches:
       - op: replace

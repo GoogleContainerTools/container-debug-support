@@ -1,11 +1,13 @@
 apiVersion: skaffold/v2beta12
 kind: Config
+metadata:
+  name: nodejs
 
 requires:
-- path: ../integration
-  activeProfiles:
-   - name: integration
-     activatedBy: [integration]
+  - path: ../integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
 
 build:
   local:
@@ -15,13 +17,10 @@ build:
     context: helper-image
     custom:
       buildCommand: ../../buildx.sh
-  # ensure images are tagged with :latest
-  tagPolicy:
-    sha256: {}
 
 test:
   - image: skaffold-debug-nodejs
-    structureTests: [structure-tests.yaml]
+    structureTests: [structure-tests-nodejs.yaml]
 
 deploy:
   logs:
@@ -30,13 +29,7 @@ deploy:
     manifests: []
 
 profiles:
-  # local: builds to local daemon only
-  - name: local
-    build:
-      local:
-        push: false
-
-  # Set of `skaffold debug`-like integration tests
+  # integration: set of `skaffold debug`-like integration tests
   - name: integration
     patches:
       - op: add
@@ -52,14 +45,17 @@ profiles:
         manifests:
           - test/k8s-test-nodejs12.yaml
 
-  # prod: pushes images to production with :latest
-  - name: prod
+  # release: pushes images to production with :latest
+  - name: release
     build:
       local:
         push: true
+      tagPolicy:
+        sha256: {}
 
-  # Use short (deprecated) image names: images were renamed so they were
-  # more easily distinguished from other images with similar names.
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
   - name: deprecated-names
     patches:
       - op: replace
