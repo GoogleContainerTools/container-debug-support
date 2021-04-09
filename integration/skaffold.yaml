@@ -6,9 +6,6 @@ metadata:
 build:
   local:
     useBuildkit: true
-  # ensure images are tagged with :latest
-  tagPolicy:
-    sha256: {}
 
 deploy:
   logs:
@@ -17,13 +14,7 @@ deploy:
     manifests: []
 
 profiles:
-  # local: builds to local daemon only
-  - name: local
-    build:
-      local:
-        push: false
-
-  # Set of `skaffold debug`-like integration tests
+  # integration: set of `skaffold debug`-like integration tests
   - name: integration
     build:
       artifacts:

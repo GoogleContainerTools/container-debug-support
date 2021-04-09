@@ -4,20 +4,33 @@ metadata:
   name: container-debug-support
 
 .YamlAnchors:
-  _integration: &integration
+  _profiles: &profiles
     activeProfiles:
      - name: integration
        activatedBy: [integration]
+     - name: release
+       activatedBy: [release]
+     - name: deprecated-names
+       activatedBy: [deprecated-names]
 
 requires:
-- path: go
-  <<: *integration
-- path: netcore
-  <<: *integration
-- path: nodejs
-  <<: *integration
-- path: python
-  <<: *integration
+  - path: go
+    <<: *profiles
+  - path: netcore
+    <<: *profiles
+  - path: nodejs
+    <<: *profiles
+  - path: python
+    <<: *profiles
 
 profiles:
-- name: integration
+  # integration: set of `skaffold debug`-like integration tests
+  - name: integration
+
+  # release: pushes images to production with :latest
+  - name: release
+
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
+  - name: deprecated-names
