@@ -1,0 +1,39 @@
+apiVersion: skaffold/v2beta12
+kind: Config
+metadata:
+  name: integration
+
+build:
+  local:
+    useBuildkit: true
+  # ensure images are tagged with :latest
+  tagPolicy:
+    sha256: {}
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []
+
+profiles:
+  # local: builds to local daemon only
+  - name: local
+    build:
+      local:
+        push: false
+
+  # Set of `skaffold debug`-like integration tests
+  - name: integration
+    build:
+      artifacts:
+      - image: kubectl
+        context: kubectl
+        docker:
+          buildArgs:
+            GOVERSION: 1.16
+    deploy:
+      kubectl:
+        manifests:
+          - k8s-rbac.yaml
+
