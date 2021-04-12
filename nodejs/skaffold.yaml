@@ -21,10 +21,11 @@ build:
 test:
   - image: skaffold-debug-nodejs
     structureTests: [structure-tests-nodejs.yaml]
-    custom:
-      - command: "cd helper-image; go test ."
-        dependencies:
-          paths: ["helper-image/*.go", "helper-image/go.*"]
+    # Disabled custom test pending Skaffold #5665 and #5666
+    ##custom:
+    ##  - command: "cd helper-image; go test ."
+    ##    dependencies:
+    ##      paths: ["helper-image/*.go", "helper-image/go.*"]
 
 deploy:
   logs:
