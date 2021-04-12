@@ -18,7 +18,9 @@ install:
   - export PATH=$HOME/bin:$PATH
 
 script:
-  - skaffold build
+  - cd nodejs/helper-image; go test .
+  # try building before integration tests
+  - skaffold build -p local
 
   # Create a kind configuration to use the docker daemon's configured
   # registry-mirrors.

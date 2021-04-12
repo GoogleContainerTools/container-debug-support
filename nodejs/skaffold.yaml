@@ -34,6 +34,13 @@ deploy:
     manifests: []
 
 profiles:
+
+  # local: never push to remote registries
+  - name: local
+    build:
+      local:
+        push: false
+
   # integration: set of `skaffold debug`-like integration tests
   - name: integration
     patches:
