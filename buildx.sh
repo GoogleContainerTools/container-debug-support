@@ -14,6 +14,7 @@ loadOrPush=$(if [ "$PUSH_IMAGE" = true ]; then echo --platform $PLATFORMS --push
 
 set -x
 docker buildx build \
+  --progress=plain \
   --builder skaffold-builder \
   $loadOrPush \
   --tag $IMAGE \
