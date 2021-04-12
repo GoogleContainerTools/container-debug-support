@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta12
+apiVersion: skaffold/v2beta13
 kind: Config
 metadata:
   name: container-debug-support
@@ -6,6 +6,8 @@ metadata:
 .YamlAnchors:
   _profiles: &profiles
     activeProfiles:
+     - name: local
+       activatedBy: [local]
      - name: integration
        activatedBy: [integration]
      - name: release
@@ -24,6 +26,9 @@ requires:
     <<: *profiles
 
 profiles:
+  # local: never push to remote registries
+  - name: local
+
   # integration: set of `skaffold debug`-like integration tests
   - name: integration
 

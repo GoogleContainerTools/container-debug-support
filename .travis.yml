@@ -10,7 +10,7 @@ before_install:
 
 install: 
   - mkdir -p $HOME/bin
-  - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/releases/latest/skaffold-linux-amd64
+  - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
   - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.9.0/kind-linux-amd64
   - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
@@ -18,6 +18,8 @@ install:
   - export PATH=$HOME/bin:$PATH
 
 script:
+  - cd nodejs/helper-image; go test .
+  # try building before integration tests
   - skaffold build -p local
 
   # Create a kind configuration to use the docker daemon's configured

@@ -1,4 +1,4 @@
-apiVersion: skaffold/v2beta12
+apiVersion: skaffold/v2beta13
 kind: Config
 metadata:
   name: nodejs
@@ -21,6 +21,11 @@ build:
 test:
   - image: skaffold-debug-nodejs
     structureTests: [structure-tests-nodejs.yaml]
+    # Disabled custom test pending Skaffold #5665 and #5666
+    ##custom:
+    ##  - command: "cd helper-image; go test ."
+    ##    dependencies:
+    ##      paths: ["helper-image/*.go", "helper-image/go.*"]
 
 deploy:
   logs:
@@ -29,6 +34,13 @@ deploy:
     manifests: []
 
 profiles:
+
+  # local: never push to remote registries
+  - name: local
+    build:
+      local:
+        push: false
+
   # integration: set of `skaffold debug`-like integration tests
   - name: integration
     patches:
