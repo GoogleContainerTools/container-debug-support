@@ -1,6 +1,8 @@
 sudo: false
 dist: bionic
-lang: bash
+language: go
+go: "1.15.x"
+
 services:
   - docker
 
@@ -18,7 +20,7 @@ install:
   - export PATH=$HOME/bin:$PATH
 
 script:
-  - cd nodejs/helper-image; go test .
+  - (cd nodejs/helper-image; go test .)
   # try building before integration tests
   - skaffold build -p local
 
