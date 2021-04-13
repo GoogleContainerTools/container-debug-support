@@ -1,0 +1,30 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: integration
+
+build:
+  local:
+    useBuildkit: true
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []
+
+profiles:
+  # integration: set of `skaffold debug`-like integration tests
+  - name: integration
+    build:
+      artifacts:
+      - image: kubectl
+        context: kubectl
+        docker:
+          buildArgs:
+            GOVERSION: 1.16
+    deploy:
+      kubectl:
+        manifests:
+          - k8s-rbac.yaml
+

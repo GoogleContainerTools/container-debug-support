@@ -1,0 +1,81 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: nodejs
+
+requires:
+  - path: ../integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
+
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+  - image: skaffold-debug-nodejs
+    context: helper-image
+    custom:
+      buildCommand: ../../buildx.sh
+
+test:
+  - image: skaffold-debug-nodejs
+    structureTests: [structure-tests-nodejs.yaml]
+    # Disabled custom test pending Skaffold #5665 and #5666
+    ##custom:
+    ##  - command: "cd helper-image; go test ."
+    ##    dependencies:
+    ##      paths: ["helper-image/*.go", "helper-image/go.*"]
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []
+
+profiles:
+
+  # local: never push to remote registries
+  - name: local
+    build:
+      local:
+        push: false
+
+  # integration: set of `skaffold debug`-like integration tests
+  - name: integration
+    patches:
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: nodejs12app
+          context: test/nodejsapp
+          docker:
+            buildArgs:
+              NODEVERSION: 12.16.0
+    deploy:
+      kubectl:
+        manifests:
+          - test/k8s-test-nodejs12.yaml
+
+  # release: pushes images to production with :latest
+  - name: release
+    build:
+      local:
+        push: true
+      tagPolicy:
+        sha256: {}
+
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
+  - name: deprecated-names
+    patches:
+      - op: replace
+        path: /build/artifacts/0/image
+        from: skaffold-debug-nodejs
+        value: nodejs
+      - op: replace
+        path: /test/0/image
+        from: skaffold-debug-nodejs
+        value: nodejs
+

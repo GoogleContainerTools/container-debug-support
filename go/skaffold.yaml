@@ -1,0 +1,103 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: go
+
+requires:
+  - path: ../integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
+
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+  - image: skaffold-debug-go
+    context: helper-image
+    custom:
+      buildCommand: ../../buildx.sh
+
+test:
+  - image: skaffold-debug-go
+    structureTests: [structure-tests-go.yaml]
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []   # overwritten in integration profile
+
+profiles:
+
+  # local: never push to remote registries
+  - name: local
+    build:
+      local:
+        push: false
+
+  # integration: set of `skaffold debug`-like integration tests
+  - name: integration
+    patches:
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go113app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.13
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go114app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.14
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go115app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.15
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go116app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.16
+    deploy:
+      kubectl:
+        manifests:
+          - test/k8s-test-go113.yaml
+          - test/k8s-test-go114.yaml
+          - test/k8s-test-go115.yaml
+          - test/k8s-test-go116.yaml
+
+  # release: pushes images to production with :latest
+  - name: release
+    build:
+      local:
+        push: true
+      tagPolicy:
+        sha256: {}
+
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
+  - name: deprecated-names
+    patches:
+      - op: replace
+        path: /build/artifacts/0/image
+        from: skaffold-debug-go
+        value: go
+      - op: replace
+        path: /test/0/image
+        from: skaffold-debug-go
+        value: go
+

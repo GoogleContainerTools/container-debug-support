@@ -1,0 +1,62 @@
+apiVersion: skaffold/v2beta13
+kind: Config
+metadata:
+  name: python
+
+requires:
+  - path: ../integration
+    activeProfiles:
+     - name: integration
+       activatedBy: [integration]
+
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+  - image: skaffold-debug-python
+    context: helper-image
+    custom:
+      buildCommand: ../../buildx.sh
+
+test:
+  - image: skaffold-debug-python
+    structureTests: [structure-tests-python.yaml]
+
+deploy:
+  logs:
+    prefix: auto
+  kubectl:
+    manifests: []
+
+profiles:
+
+  # local: never push to remote registries
+  - name: local
+    build:
+      local:
+        push: false
+
+  # integration: set of `skaffold debug`-like integration tests
+  - name: integration
+
+  # release: pushes images to production with :latest
+  - name: release
+    build:
+      local:
+        push: true
+      tagPolicy:
+        sha256: {}
+
+  # deprecated-names: use short (deprecated) image names: images were
+  # prefixed with `skaffold-debug-`  so they were more easily distinguished
+  # from other images with similar names.
+  - name: deprecated-names
+    patches:
+      - op: replace
+        path: /build/artifacts/0/image
+        from: skaffold-debug-python
+        value: python
+      - op: replace
+        path: /test/0/image
+        from: skaffold-debug-python
+        value: python
