@@ -1,6 +1,8 @@
 sudo: false
 dist: bionic
-lang: bash
+language: go
+go: "1.15.x"
+
 services:
   - docker
 
