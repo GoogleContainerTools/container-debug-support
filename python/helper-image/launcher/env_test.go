@@ -96,7 +96,7 @@ func TestEnvPrependFilepath(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
-			result := test.env	// not a copy but that's ok for this test
+			result := test.env // not a copy but that's ok for this test
 			result.PrependFilepath(test.key, test.value)
 			if len(result) != len(test.expected) {
 				t.Errorf("expected %v but got %v", test.expected, result)

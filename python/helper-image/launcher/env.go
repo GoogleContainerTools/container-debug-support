@@ -61,7 +61,7 @@ func (e env) String() string {
 		keys = append(keys, k)
 	}
 	sort.Strings(keys)
-	
+
 	var s string
 	for _, k := range keys {
 		s += fmt.Sprintf("%s=%q ", k, e[k])

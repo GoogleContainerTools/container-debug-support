@@ -19,7 +19,7 @@ FROM golang:1.15 as build
 COPY . .
 RUN CGO_ENABLED=0 go build -o pydevconnect -ldflags '-s -w -extldflags "-static"' pydevconnect.go
 
-# Now populate the test image 
+# Now populate the test image
 FROM busybox
 COPY --from=build /go/pydevconnect /
 ENTRYPOINT ["/pydevconnect"]
