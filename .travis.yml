@@ -21,6 +21,7 @@ install:
 
 script:
   - (cd nodejs/helper-image; go test .)
+  - (cd python/helper-image/launcher; go test .)
   # try building before integration tests
   - skaffold build -p local
 
