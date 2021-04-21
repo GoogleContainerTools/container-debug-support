@@ -19,8 +19,9 @@ limitations under the License.
 // Python introduces some quirks.  There are now three
 // methods for hooking up a debugging backend:
 //
-// - pydevd: used by PyDev and IntelliJ/PyCharm
-// - ptvsd: wraps pydevd with the debug-adapter protocol,
+// - pydevd: the stock Python debugging backend
+// - pydevd-pycharm: PyDev with modifications for IntelliJ/PyCharm
+// - ptvsd: wraps pydevd with the debug-adapter protocol (obsolete)
 // - debugpy: new and improved ptvsd
 //
 // pydevd has pyx libraries which are specific to particular versions of Python.
@@ -38,7 +39,8 @@ limitations under the License.
 //
 // This launcher is expected to be invoked as follows:
 //
-//    launcher --mode <pydevd|debugpy|ptvsd> --port p [--wait] -- original-command-line ...
+//    launcher --mode <pydevd|pydevd-pycharm|debugpy|ptvsd> \
+//        --port p [--wait] -- original-command-line ...
 //
 // This launcher will determine the python executable based on the `original-command-line`.
 // The launcher will configure the PYTHONPATH to point to the appropriate installation
