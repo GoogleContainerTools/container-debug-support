@@ -46,6 +46,7 @@ type fakeCmd struct {
 	output   string
 }
 
+// ensures fakeCmd satisfies the commander interface
 var _ commander = (*fakeCmd)(nil)
 
 func (f *fakeCmd) Run() error {
