@@ -35,6 +35,7 @@ type commander interface {
 	CombinedOutput() ([]byte, error)
 }
 
+// ensures Cmd satisfies the commander interface
 var _ commander = (*exec.Cmd)(nil)
 
 // createCommand creates a normal exec.Cmd object
