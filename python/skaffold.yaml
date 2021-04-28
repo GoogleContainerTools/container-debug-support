@@ -21,6 +21,11 @@ build:
 test:
   - image: skaffold-debug-python
     structureTests: [structure-tests-python.yaml]
+    # Disabled custom test pending Skaffold #5665 and #5666
+    ##custom:
+    ##  - command: "cd helper-image/launcher; go test ."
+    ##    dependencies:
+    ##      paths: ["helper-image/launcher/*.go"]
 
 deploy:
   logs:
