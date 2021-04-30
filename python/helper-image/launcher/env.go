@@ -44,11 +44,11 @@ func (e env) AsPairs() []string {
 	return m
 }
 
-// PrependFilepath prepands a path to a environment variable.
-func (e env) PrependFilepath(key string, path string) {
+// AppendFilepath appands a path to a environment variable.
+func (e env) AppendFilepath(key string, path string) {
 	v := e[key]
 	if v != "" {
-		v = path + string(filepath.ListSeparator) + v
+		v = v + string(filepath.ListSeparator) + path
 	} else {
 		v = path
 	}

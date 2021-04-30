@@ -257,19 +257,25 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 	}
 	// The skaffold-debug-python helper image places pydevd and debugpy in /dbg/python/lib/pythonM.N,
 	// but separates pydevd and pydevd-pycharm in separate directories to avoid possible leakage.
+	var libraryPath string
 	switch pc.debugMode {
 	case ModePtvsd, ModeDebugpy:
-		libraryPath := fmt.Sprintf(dbgRoot+"/python/lib/python%d.%d/site-packages", major, minor)
-		pc.env.PrependFilepath("PYTHONPATH", libraryPath)
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/lib/python%d.%d/site-packages", major, minor)
 
 	case ModePydevd:
-		libraryPath := fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
-		pc.env.PrependFilepath("PYTHONPATH", libraryPath)
-	case ModePydevdPycharm:
-		libraryPath := fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
-		pc.env.PrependFilepath("PYTHONPATH", libraryPath)
-	}
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
 
+	case ModePydevdPycharm:
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
+	}
+	if libraryPath != "" {
+		if !pathExists(libraryPath) {
+			// Warn as the user may have installed debugpy themselves
+			logrus.Warnf("Debugging support for Python %d.%d not found: may require manually installing %q", major, minor, pc.debugMode)
+		}
+		// Append to ensure user-configured values are found first.
+		pc.env.AppendFilepath("PYTHONPATH", libraryPath)
+	}
 	return nil
 }
 
@@ -357,4 +363,12 @@ func logrusLevel(env env) logrus.Level {
 		logrus.Warnln("Unknown logging level: WRAPPER_VERBOSE=", v)
 	}
 	return logrus.WarnLevel
+}
+
+func pathExists(path string) bool {
+	_, err := os.Stat(path)
+	if err == nil || !os.IsNotExist(err) {
+		return true
+	}
+	return false
 }

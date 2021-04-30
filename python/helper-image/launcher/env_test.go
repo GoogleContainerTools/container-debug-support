@@ -80,7 +80,7 @@ func TestEnvFromPairs(t *testing.T) {
 	}
 }
 
-func TestEnvPrependFilepath(t *testing.T) {
+func TestEnvAppendFilepath(t *testing.T) {
 	tests := []struct {
 		description string
 		env         env
@@ -89,15 +89,15 @@ func TestEnvPrependFilepath(t *testing.T) {
 		expected    map[string]string
 	}{
 		{"empty", env{}, "PATH", "value", env{"PATH": "value"}},
-		{"existing value", env{"PATH": "other"}, "PATH", "value", env{"PATH": "value" + string(filepath.ListSeparator) + "other"}},
+		{"existing value", env{"PATH": "other"}, "PATH", "value", env{"PATH": "other" + string(filepath.ListSeparator) + "value"}},
 		{"other value unchanged", env{"PYTHONPATH": "other"}, "PATH", "value", env{"PATH": "value", "PYTHONPATH": "other"}},
-		{"existing value with other value unchanged", env{"PATH": "other", "PYTHONPATH": "other"}, "PATH", "value", env{"PATH": "value" + string(filepath.ListSeparator) + "other", "PYTHONPATH": "other"}},
+		{"existing value with other value unchanged", env{"PATH": "other", "PYTHONPATH": "other"}, "PATH", "value", env{"PATH": "other" + string(filepath.ListSeparator) + "value", "PYTHONPATH": "other"}},
 	}
 
 	for _, test := range tests {
 		t.Run(test.description, func(t *testing.T) {
 			result := test.env // not a copy but that's ok for this test
-			result.PrependFilepath(test.key, test.value)
+			result.AppendFilepath(test.key, test.value)
 			if len(result) != len(test.expected) {
 				t.Errorf("expected %v but got %v", test.expected, result)
 			} else {
