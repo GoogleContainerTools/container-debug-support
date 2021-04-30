@@ -20,6 +20,7 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
@@ -291,5 +292,14 @@ func TestLaunch(t *testing.T) {
 				_t.Errorf("%T differ (-got, +want): %s", pc, diff)
 			}
 		})
+	}
+}
+
+func TestPathExists(t *testing.T) {
+	if pathExists(filepath.Join("this", "should", "not", "exist")) {
+		t.Error("pathExists should have failed on non-existent path")
+	}
+	if !pathExists(t.TempDir()) {
+		t.Error("pathExists failed on real path")
 	}
 }
