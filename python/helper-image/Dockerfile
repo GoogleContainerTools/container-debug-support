@@ -14,7 +14,9 @@
 
 # This Dockerfile creates a debug helper base image for Python.
 # It provides installations of debugpy, ptvsd, pydevd, and pydevd-pycharm
-# for Python 2.7, 3.7, 3.8, and 3.9.
+# for Python 2.7, 3.5, 3.6, 3.7, 3.8, and 3.9.
+#   - Apache Beam is based around Python 3.5
+#   - Many ML/NLP images are based on Python 3.6
 #
 # debugpy and ptvsd are well-structured packages installed in separate
 # directories under # /dbg/python/lib/pythonX.Y/site-packages and
@@ -29,6 +31,16 @@ FROM python:2.7 as python27
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python2.7 pip install --user pydevd
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python2.7 pip install --user pydevd-pycharm
+
+FROM python:3.5 as python35
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.5 pip install --user pydevd
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.5 pip install --user pydevd-pycharm
+
+FROM python:3.6 as python36
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.6 pip install --user pydevd
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.6 pip install --user pydevd-pycharm
 
 FROM python:3.7 as python37
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
@@ -60,6 +72,8 @@ COPY install.sh /
 CMD ["/bin/sh", "/install.sh"]
 WORKDIR /duct-tape
 COPY --from=python27 /dbgpy/ python/
+COPY --from=python35 /dbgpy/ python/
+COPY --from=python36 /dbgpy/ python/
 COPY --from=python37 /dbgpy/ python/
 COPY --from=python38 /dbgpy/ python/
 COPY --from=python39 /dbgpy/ python/
