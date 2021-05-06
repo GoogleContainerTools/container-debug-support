@@ -1,0 +1,46 @@
+commit e6df155b16ee470200b3cda0c99a95e34a4a1d1b
+Author: Brian de Alwis <bdealwis@google.com>
+Date:   Thu May 6 12:23:05 2021 -0400
+
+    Initial support for a `--continue` flag for `--server`
+
+diff --git _pydevd_bundle/pydevd_command_line_handling.py _pydevd_bundle/pydevd_command_line_handling.py
+index 2afae09..2985a35 100644
+--- _pydevd_bundle/pydevd_command_line_handling.py
++++ _pydevd_bundle/pydevd_command_line_handling.py
+@@ -69,6 +69,7 @@ ACCEPTED_ARG_HANDLERS = [
+     ArgHandlerWithParam('client-access-token'),
+ 
+     ArgHandlerBool('server'),
++    ArgHandlerBool('continue'),
+     ArgHandlerBool('DEBUG_RECORD_SOCKET_READS'),
+     ArgHandlerBool('multiproc'),  # Used by PyCharm (reuses connection: ssh tunneling)
+     ArgHandlerBool('multiprocess'),  # Used by PyDev (creates new connection to ide)
+diff --git pydevd.py pydevd.py
+index 4639778..9745add 100644
+--- pydevd.py
++++ pydevd.py
+@@ -3276,14 +3276,21 @@ def main():
+ 
+         apply_debugger_options(setup)
+ 
++        wait = True
++        if setup['continue']:
++            wait = False
++
+         try:
+-            debugger.connect(host, port)
++            if wait:
++                debugger.connect(host, port)
++            else:
++                debugger.create_wait_for_connection_thread()
+         except:
+             sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
+             pydev_log.exception()
+             sys.exit(1)
+ 
+-        globals = debugger.run(setup['file'], None, None, is_module)
++        globals = debugger.run(setup['file'], None, None, is_module, set_trace=wait)
+ 
+         if setup['cmd-line']:
+             debugger.wait_for_commands(globals)
