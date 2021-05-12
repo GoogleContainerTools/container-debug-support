@@ -112,6 +112,8 @@ func TestAlreadyConfigured(t *testing.T) {
 		{"python with app module 2", pythonContext{args: []string{"python", "-m", "app"}}, false},
 		{"configured for pydevd", pythonContext{args: []string{"pydevd", "--server", "app"}}, true},
 		{"configured for pydevd", pythonContext{args: []string{"/dbg/pydevd/bin/pydevd", "--server", "app"}}, true},
+		{"configured for pydevd", pythonContext{args: []string{"python", "-mpydevd", "--server", "app"}}, true},
+		{"configured for pydevd", pythonContext{args: []string{"python3.8", "-m", "pydevd", "--server", "app"}}, true},
 		{"python with debugpy module", pythonContext{args: []string{"python", "-mdebugpy"}}, true},
 		{"versioned python with debugpy module", pythonContext{args: []string{"/usr/bin/python3.9", "-m", "debugpy"}}, true},
 		{"python with ptvsd module", pythonContext{args: []string{"python", "-mptvsd"}}, true},
