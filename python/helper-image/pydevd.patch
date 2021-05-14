@@ -11,7 +11,7 @@ index 2afae09..2985a35 100644
      ArgHandlerBool('multiproc'),  # Used by PyCharm (reuses connection: ssh tunneling)
      ArgHandlerBool('multiprocess'),  # Used by PyDev (creates new connection to ide)
 diff --git pydevd.py pydevd.py
-index 4639778..0da7e27 100644
+index 4639778..9ecfec0 100644
 --- pydevd.py
 +++ pydevd.py
 @@ -1376,6 +1376,8 @@ class PyDB(object):
@@ -19,7 +19,7 @@ index 4639778..0da7e27 100644
          def run(self):
              host = SetupHolder.setup['client']
 +            if host is None:
-+                host = 'localhost'
++                host = ''
              port = SetupHolder.setup['port']
  
              self._server_socket = create_server_socket(host=host, port=port)
