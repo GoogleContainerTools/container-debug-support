@@ -173,6 +173,10 @@ func (pc *pythonContext) alreadyConfigured() bool {
 			logrus.Debug("already configured to use ptvsd")
 			return true
 		}
+		if (pc.args[1] == "-m" && len(pc.args) > 2 && pc.args[2] == "pydevd") || pc.args[1] == "-mpydevd" {
+			logrus.Debug("already configured to use pydevd")
+			return true
+		}
 	}
 	return false
 }
