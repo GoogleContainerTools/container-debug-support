@@ -20,10 +20,12 @@ import (
 	"context"
 	"fmt"
 	"io/ioutil"
+	"os"
 	"path/filepath"
 	"testing"
 
 	"github.com/google/go-cmp/cmp"
+	"github.com/google/go-cmp/cmp/cmpopts"
 )
 
 func TestValidateDebugMode(t *testing.T) {
@@ -311,4 +313,86 @@ func TestPathExists(t *testing.T) {
 	if !pathExists(t.TempDir()) {
 		t.Error("pathExists failed on real path")
 	}
+}
+
+func TestHandlePydevModule(t *testing.T) {
+	tmp := os.TempDir()
+
+	tests := []struct {
+		description string
+		args        []string
+		shouldErr   bool
+		module      string
+		file        string
+		remaining   []string
+	}{
+		{
+			description: "plain file",
+			args:        []string{"app.py"},
+			file:        "app.py",
+		},
+		{
+			description: "-mmodule",
+			args:        []string{"-mmodule"},
+			file:        filepath.Join(tmp, "*", "skaffold_pydevd_launch.py"),
+		},
+		{
+			description: "-m module",
+			args:        []string{"-m", "module"},
+			file:        filepath.Join(tmp, "*", "skaffold_pydevd_launch.py"),
+		},
+		{
+			description: "- should error",
+			args:        []string{"-", "module"},
+			shouldErr:   true,
+		},
+		{
+			description: "-x should error",
+			args:        []string{"-x", "module"},
+			shouldErr:   true,
+		},
+		{
+			description: "lone -m should error",
+			args:        []string{"-m"},
+			shouldErr:   true,
+		},
+		{
+			description: "no args should error",
+			shouldErr:   true,
+		},
+	}
+	for _, test := range tests {
+		t.Run(test.description, func(t *testing.T) {
+			file, args, err := handlePydevModule(test.args)
+			if test.shouldErr {
+				if err == nil {
+					t.Error("Expected an error")
+				}
+			} else {
+				if !fileMatch(t, test.file, file) {
+					t.Errorf("Wanted %q but got %q", test.file, file)
+				}
+				if diff := cmp.Diff(args, test.remaining, cmpopts.EquateEmpty()); diff != "" {
+					t.Errorf("remaining args %T differ (-got, +want): %s", test.remaining, diff)
+				}
+			}
+		})
+	}
+}
+
+func fileMatch(t *testing.T, glob, file string) bool {
+	if file == glob {
+		return true
+	}
+	matches, err := filepath.Glob(glob)
+	if err != nil {
+		t.Errorf("Failed to expand globe %q: %v", glob, err)
+		return false
+	}
+	for _, m := range matches {
+		if file == m {
+			return true
+		}
+	}
+	return false
 }
