@@ -308,13 +308,16 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 		// Appropriate location to resolve pydevd is set in updateEnv
 		// TODO: check for modules (and fail?)
 		cmdline = append(cmdline, pc.args[0])
-		cmdline = append(cmdline, "-m", "pydevd", "--port", strconv.Itoa(int(pc.port)), "--server")
+		cmdline = append(cmdline, "-m", "pydevd", "--server", "--port", strconv.Itoa(int(pc.port)))
 		if pc.env["WRAPPER_VERBOSE"] != "" {
 			cmdline = append(cmdline, "--DEBUG")
 		}
 		if pc.debugMode == ModePydevdPycharm {
 			// From the pydevd source, PyCharm wants multiproc
 			cmdline = append(cmdline, "--multiproc")
+		}
+		if !pc.wait {
+			cmdline = append(cmdline, "--continue")
 		}
 		cmdline = append(cmdline, "--file") // --file is expected as last argument
 		cmdline = append(cmdline, pc.args[1:]...)

@@ -30,31 +30,43 @@
 FROM python:2.7 as python27
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python2.7 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python2.7/lib/python2.7/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python2.7 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.5 as python35
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.5 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.5/lib/python3.5/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.5 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.6 as python36
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.6 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.6/lib/python3.6/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.6 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.7 as python37
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.7 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.7/lib/python3.7/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.7 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.8 as python38
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.8 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.8/lib/python3.8/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.8 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.9 as python39
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
 RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.9 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.9/lib/python3.9/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.9 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM golang:1.14.1 as build
