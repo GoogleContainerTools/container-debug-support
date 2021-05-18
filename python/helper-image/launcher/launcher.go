@@ -344,9 +344,6 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 		}
 		cmdline = append(cmdline, file)
 		cmdline = append(cmdline, args...)
-		if pc.wait {
-			logrus.Warn("pydevd does not support wait-for-client")
-		}
 		pc.args = cmdline
 	}
 	return nil
