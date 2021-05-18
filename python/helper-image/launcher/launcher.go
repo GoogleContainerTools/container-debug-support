@@ -45,6 +45,25 @@ limitations under the License.
 // This launcher will determine the python executable based on the `original-command-line`.
 // The launcher will configure the PYTHONPATH to point to the appropriate installation
 // of pydevd/debugpy/ptvsd for the corresponding python binary.
+//
+// debugpy and ptvsd are pretty straightforward translations of the
+// launcher command-line `python -m debugpy`.
+//
+// pydevd is more involved as pydevd does not support loading modules
+// from the command-line (e.g., `python -m flask`).  This launcher
+// instead creates a small module-loader script using runpy.
+// So `launcher --mode pydevd --port 5678 -- python -m flask app.py`
+// will create a temp file named `skaffold_pydevd_launch.py`:
+// ```
+// import sys
+// import runpy
+// runpy.run_module('flask', run_name="__main__",alter_sys=True)
+// ```
+// and will then invoke:
+// ```
+// python -m pydevd --server --port 5678 --DEBUG --continue \
+//   --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
+// ```
 package main
 
 import (
@@ -307,7 +326,6 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 
 	case ModePydevd, ModePydevdPycharm:
 		// Appropriate location to resolve pydevd is set in updateEnv
-		// TODO: check for modules (and fail?)
 		cmdline = append(cmdline, pc.args[0])
 		cmdline = append(cmdline, "-m", "pydevd", "--server", "--port", strconv.Itoa(int(pc.port)))
 		if pc.env["WRAPPER_VERBOSE"] != "" {
