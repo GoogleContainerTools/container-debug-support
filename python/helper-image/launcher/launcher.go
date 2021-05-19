@@ -45,6 +45,25 @@ limitations under the License.
 // This launcher will determine the python executable based on the `original-command-line`.
 // The launcher will configure the PYTHONPATH to point to the appropriate installation
 // of pydevd/debugpy/ptvsd for the corresponding python binary.
+//
+// debugpy and ptvsd are pretty straightforward translations of the
+// launcher command-line `python -m debugpy`.
+//
+// pydevd is more involved as pydevd does not support loading modules
+// from the command-line (e.g., `python -m flask`).  This launcher
+// instead creates a small module-loader script using runpy.
+// So `launcher --mode pydevd --port 5678 -- python -m flask app.py`
+// will create a temp file named `skaffold_pydevd_launch.py`:
+// ```
+// import sys
+// import runpy
+// runpy.run_module('flask', run_name="__main__",alter_sys=True)
+// ```
+// and will then invoke:
+// ```
+// python -m pydevd --server --port 5678 --DEBUG --continue \
+//   --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
+// ```
 package main
 
 import (
@@ -52,6 +71,7 @@ import (
 	"flag"
 	"fmt"
 	"io"
+	"io/ioutil"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -306,24 +326,24 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 
 	case ModePydevd, ModePydevdPycharm:
 		// Appropriate location to resolve pydevd is set in updateEnv
-		// TODO: check for modules (and fail?)
 		cmdline = append(cmdline, pc.args[0])
 		cmdline = append(cmdline, "-m", "pydevd", "--server", "--port", strconv.Itoa(int(pc.port)))
 		if pc.env["WRAPPER_VERBOSE"] != "" {
 			cmdline = append(cmdline, "--DEBUG")
 		}
-		if pc.debugMode == ModePydevdPycharm {
-			// From the pydevd source, PyCharm wants multiproc
-			cmdline = append(cmdline, "--multiproc")
-		}
 		if !pc.wait {
 			cmdline = append(cmdline, "--continue")
 		}
-		cmdline = append(cmdline, "--file") // --file is expected as last argument
-		cmdline = append(cmdline, pc.args[1:]...)
-		if pc.wait {
-			logrus.Warn("pydevd does not support wait-for-client")
+
+		// --file is expected as last pydev argument, but it must be a file, and so launching with
+		// a module requires some special handling.
+		cmdline = append(cmdline, "--file")
+		file, args, err := handlePydevModule(pc.args[1:])
+		if err != nil {
+			return err
 		}
+		cmdline = append(cmdline, file)
+		cmdline = append(cmdline, args...)
 		pc.args = cmdline
 	}
 	return nil
@@ -354,6 +374,47 @@ func determinePythonMajorMinor(ctx context.Context, launcherBin string, env env)
 		minor, err = strconv.Atoi(v[1])
 	}
 	return
+}
+
+// handlePydevModule applies special pydevd handling for a python module.  When a module is
+// found, we write out a python script that uses runpy to invoke the module.
+func handlePydevModule(args []string) (string, []string, error) {
+	switch {
+	case len(args) == 0:
+		return "", nil, fmt.Errorf("no python command-line specified") // shouldn't happen
+	case !strings.HasPrefix(args[0], "-"):
+		// this is a file
+		return args[0], args[1:], nil
+	case !strings.HasPrefix(args[0], "-m"):
+		// this is some other command-line flag
+		return "", nil, fmt.Errorf("expected python module: %q", args)
+	}
+	module := args[0][2:]
+	remaining := args[1:]
+	if module == "" {
+		if len(args) == 1 {
+			return "", nil, fmt.Errorf("missing python module: %q", args)
+		}
+		module = args[1]
+		remaining = args[2:]
+	}
+
+	snippet := strings.ReplaceAll(`import sys
+import runpy
+runpy.run_module('{module}', run_name="__main__",alter_sys=True)
+`, `{module}`, module)
+
+	// write out the temp location as other locations may not be writable
+	d, err := ioutil.TempDir("", "pydevd*")
+	if err != nil {
+		return "", nil, err
+	}
+	// use a skaffold-specific file name to ensure no possibility of it matching a user import
+	f := filepath.Join(d, "skaffold_pydevd_launch.py")
+	if err := ioutil.WriteFile(f, []byte(snippet), 0755); err != nil {
+		return "", nil, err
+	}
+	return f, remaining, nil
 }
 
 func isEnabled(env env) bool {
