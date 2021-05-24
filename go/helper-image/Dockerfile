@@ -4,7 +4,7 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-ARG DELVE_VERSION=1.6.0
+ARG DELVE_VERSION=1.6.1
 
 RUN curl --location --output delve-$DELVE_VERSION.tar.gz https://github.com/go-delve/delve/archive/v$DELVE_VERSION.tar.gz \
   && tar xzf delve-$DELVE_VERSION.tar.gz \
