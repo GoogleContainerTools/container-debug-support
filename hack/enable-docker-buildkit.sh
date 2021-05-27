@@ -6,11 +6,15 @@ if [ -f /etc/docker/daemon.json ]; then
     echo "/etc/docker/daemon.json was:"
     sed 's/^/> /' /etc/docker/daemon.json
     echo "/etc/docker/daemon.json now:"
-    jq '.+{"experimental":true}' /etc/docker/daemon.json | sudo tee /etc/docker/daemon.json
+    jq '.+{"experimental":true}' /etc/docker/daemon.json \
+    | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
+    | sudo tee /etc/docker/daemon.json
 else
     sudo mkdir -vp /etc/docker
     echo "/etc/docker/daemon.json now:"
-    echo '{"experimental":true}' | sudo tee /etc/docker/daemon.json
+    echo '{"experimental":true}' \
+    | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
+    | sudo tee /etc/docker/daemon.json
 fi
 
 if [ -f $HOME/.docker/config.json ]; then
