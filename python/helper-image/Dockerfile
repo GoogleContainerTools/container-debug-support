@@ -76,7 +76,7 @@ RUN GOPATH="" CGO_ENABLED=0 go build -o launcher -ldflags '-s -w -extldflags "-s
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
-FROM --platform=$BUILDPLATFORM busybox
+FROM busybox
 ARG BUILDPLATFORM
 
 # The install script copies all files in /duct-tape to /dbg
