@@ -4,6 +4,11 @@ language: go
 go: "1.15.x"
 arch: [amd64, arm64]
 
+addons:
+  apt:
+    packages:
+      - jq
+
 services:
   - docker
 
