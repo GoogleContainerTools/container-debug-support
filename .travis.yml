@@ -8,6 +8,7 @@ addons:
   apt:
     packages:
       - jq
+      - docker-ce
 
 services:
   - docker
