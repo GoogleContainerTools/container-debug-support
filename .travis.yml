@@ -6,6 +6,9 @@ arch: [amd64, arm64]
 
 addons:
   apt:
+    sources:
+      - docker: 'deb https://download.docker.com/linux/ubuntu'
+        key_url: 'https://download.docker.com/linux/ubuntu/gpg'
     packages:
       - jq
       - docker-ce
