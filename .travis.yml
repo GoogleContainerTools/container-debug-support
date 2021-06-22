@@ -14,6 +14,7 @@ services:
 
 before_install:
   - sh hack/enable-docker-buildkit.sh
+  - sudo systemctl start docker
   - docker info
 
 install: 
