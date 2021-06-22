@@ -3,8 +3,11 @@
 # Skaffold Custom Builder that uses `docker buildx` to perform a
 # multi-platform build.
 
+export DOCKER_BUILDKIT=1
+
+# The local Docker daemon which cannot load images for multiple architectures,
+# so just build using normal Docker.
 if [ "$PUSH_IMAGE" != true ]; then
-    export DOCKER_BUILDKIT=1
     exec docker build --tag $IMAGE "$BUILD_CONTEXT"
 fi
 

@@ -6,20 +6,11 @@ arch: [amd64, arm64]
 
 addons:
   apt:
-    sources:
-      # `bionic` should match the `dist` above
-      - sourceline: 'deb https://download.docker.com/linux/ubuntu bionic main'
-        key_url: 'https://download.docker.com/linux/ubuntu/gpg'
     packages:
       - jq
-      - docker-ce
 
 services:
   - docker
-
-before_install: 
-  - sh hack/enable-docker-buildkit.sh
-  - docker info
 
 install: 
   - mkdir -p $HOME/bin
@@ -39,7 +30,7 @@ script:
   # Create a kind configuration to use the docker daemon's configured
   # registry-mirrors.
   - |
-    docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n    endpoint = %q\n" $reg $config.Mirrors}}{{end}}{{end}}' > /tmp/kind.config
+    docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n    endpoint = [" $reg}}{{range $index, $mirror := $config.Mirrors}}{{if $index}},{{end}}{{printf "%q" $mirror}}{{end}}{{printf "]\n"}}{{end}}{{end}}' > /tmp/kind.config
 
   # `kind create cluster` is very verbose
   - kind create cluster --quiet --config /tmp/kind.config
