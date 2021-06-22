@@ -11,7 +11,9 @@ if [ "$PUSH_IMAGE" != true ]; then
     exec docker build --tag $IMAGE "$BUILD_CONTEXT"
 fi
 
-PLATFORMS=linux/amd64,linux/arm64
+if [ -z "$PLATFORMS" ]; then
+    PLATFORMS=linux/amd64,linux/arm64
+fi
 
 if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
   echo ">> creating 'docker buildx' builder 'skaffold-builder'"
