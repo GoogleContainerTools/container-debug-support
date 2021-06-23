@@ -9,13 +9,17 @@ if [ -f /etc/docker/daemon.json ]; then
     echo "applying jq produces:"
     jq '.+{"experimental":true}' /etc/docker/daemon.json \
     | jq '."registry-mirrors" -= ["https://registry.docker.io"]' \
-    | jq '."registry-mirrors" += ["https://mirror.gcr.io"]'
+    | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
+    cat
 
     echo "/etc/docker/daemon.json now:"
     jq '.+{"experimental":true}' /etc/docker/daemon.json \
     | jq '."registry-mirrors" -= ["https://registry.docker.io"]' \
     | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
     | sudo tee /etc/docker/daemon.json
+
+    echo "/etc/docker/daemon.json now (for realz):"
+    sed 's/^/> /' /etc/docker/daemon.json
 else
     sudo mkdir -vp /etc/docker
     echo "/etc/docker/daemon.json now:"
