@@ -14,7 +14,7 @@ services:
 
 before_install:
   - sh hack/enable-docker-buildkit.sh
-  - sudo systemctl start docker
+  - env "DOCKER_OPTS=$DOCKER_OPTS --registry-mirror=https://mirror.gcr.io" sudo service docker restart
   - docker info
 
 install: 
