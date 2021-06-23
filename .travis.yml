@@ -16,10 +16,30 @@ before_install:
   - env | sort
   - dig +short myip.opendns.com @resolver1.opendns.com
 
+  # why is jq erasing the file content?
+  - if [ -f /etc/docker/daemon.json ]; then
+      echo "docker daemon.json:";
+      sed 's/^/> /' /etc/docker/daemon.json;
+      set -x;
+      echo ===;
+      jq . /etc/docker/daemon.json;
+      echo ===;
+      jq '.+{"experimental":true}' /etc/docker/daemon.json;
+      echo ===;
+      jq '.+{"experimental":true}' /etc/docker/daemon.json \
+      | jq '."registry-mirrors" -= ["https://registry.docker.io"]';
+      echo ===;
+      jq '.+{"experimental":true}' /etc/docker/daemon.json \
+      | jq '."registry-mirrors" -= ["https://registry.docker.io"]' \
+      | jq '."registry-mirrors" += ["https://mirror.gcr.io"]';
+    fi
+
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
   - sudo service docker restart
   - docker info
+  # why is this failing?
+  - docker --log-level=debug pull golang:1.14.1
 
 install: 
   - mkdir -p $HOME/bin
