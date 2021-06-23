@@ -18,7 +18,7 @@ before_install:
 
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
-  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  - sudo service docker restart || systemctl status docker.service
   - docker info
   # why is this failing?
   - docker --log-level=debug pull golang:1.14.1
