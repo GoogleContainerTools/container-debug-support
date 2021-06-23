@@ -15,6 +15,8 @@ services:
 before_install:
   - env | sort
   - dig +short myip.opendns.com @resolver1.opendns.com
+
+  # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
   - sudo service docker restart
   - docker info
@@ -44,5 +46,5 @@ script:
   - kind create cluster --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config
 
   # we had `run-its.sh` in `after_success` but it doesn't cause failures
-  - KUBECONFIG=/tmp/kube.config bash ./run-its.sh
+  - KUBECONFIG=/tmp/kube.config bash ./run-its.sh -p local
 
