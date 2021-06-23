@@ -13,16 +13,17 @@ services:
   - docker
 
 before_install:
-  #- sh hack/enable-docker-buildkit.sh
-  - env
-  - env "DOCKER_OPTS=$DOCKER_OPTS --registry-mirror=https://mirror.gcr.io" sudo service docker restart
+  - env | sort
+  - dig +short myip.opendns.com @resolver1.opendns.com
+  - sh hack/enable-docker-buildkit.sh
+  - sudo service docker restart
   - docker info
 
 install: 
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-${TRAVIS_CPU_ARCH}
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-${TRAVIS_CPU_ARCH}
-  - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.9.0/kind-linux-${TRAVIS_CPU_ARCH}
+  - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-${TRAVIS_CPU_ARCH}
   - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/${TRAVIS_CPU_ARCH}/kubectl
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
@@ -30,6 +31,7 @@ install:
 script:
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
+
   # try building before integration tests
   - skaffold build -p local
 
@@ -39,8 +41,7 @@ script:
     docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n  endpoint = [" $reg}}{{range $index, $mirror := $config.Mirrors}}{{if $index}},{{end}}{{printf "%q" $mirror}}{{end}}{{printf "]\n"}}{{end}}{{end}}' | tee /tmp/kind.config
 
   # `kind create cluster` is very verbose
-  - kind create cluster --quiet --config /tmp/kind.config
-  - kind get kubeconfig > /tmp/kube.config
+  - kind create cluster --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config
 
   # we had `run-its.sh` in `after_success` but it doesn't cause failures
   - KUBECONFIG=/tmp/kube.config bash ./run-its.sh
