@@ -1,8 +1,8 @@
 sudo: false
-dist: bionic
+dist: focal
+arch: [amd64, arm64]
 language: go
 go: "1.15.x"
-arch: [amd64, arm64]
 
 addons:
   apt:
@@ -13,7 +13,8 @@ services:
   - docker
 
 before_install:
-  - sh hack/enable-docker-buildkit.sh
+  #- sh hack/enable-docker-buildkit.sh
+  - env
   - env "DOCKER_OPTS=$DOCKER_OPTS --registry-mirror=https://mirror.gcr.io" sudo service docker restart
   - docker info
 
