@@ -9,7 +9,7 @@ export DOCKER_BUILDKIT=1
 # so just build using normal Docker.
 if [ "$PUSH_IMAGE" != true ]; then
     set -x
-    exec docker buildx build --tag $IMAGE "$BUILD_CONTEXT"
+    exec docker buildx build --tag $IMAGE --load "$BUILD_CONTEXT"
 fi
 
 if [ -z "$PLATFORMS" ]; then
