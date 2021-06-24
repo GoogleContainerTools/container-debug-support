@@ -6,6 +6,8 @@ if [ -f /etc/docker/daemon.json ]; then
     echo "/etc/docker/daemon.json was:"
     sed 's/^/> /' /etc/docker/daemon.json
 
+    # avoid `jq ... | sudo tee /etc/docker/daemon.json` as we were
+    # having 0-byte files created instead (!)
     jq '.+{"experimental":true}' /etc/docker/daemon.json \
     | jq '."registry-mirrors" -= ["https://registry.docker.io"]' \
     | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
