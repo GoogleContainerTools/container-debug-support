@@ -8,7 +8,8 @@ export DOCKER_BUILDKIT=1
 # The local Docker daemon which cannot load images for multiple architectures,
 # so just build using normal Docker.
 if [ "$PUSH_IMAGE" != true ]; then
-    exec docker build --tag $IMAGE "$BUILD_CONTEXT"
+    set -x
+    exec docker --log-level=debug build --tag $IMAGE "$BUILD_CONTEXT"
 fi
 
 if [ -z "$PLATFORMS" ]; then

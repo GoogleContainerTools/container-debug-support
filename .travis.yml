@@ -25,8 +25,6 @@ before_install:
   - sh hack/enable-docker-buildkit.sh
   - sudo service docker restart || systemctl status docker.service
   - docker info
-  # why is this failing?
-  - docker --log-level=debug pull golang:1.14.1
 
 install: 
   - mkdir -p $HOME/bin
