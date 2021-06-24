@@ -42,3 +42,7 @@ echo ">> installing docker-buildx"
 mkdir -vp $HOME/.docker/cli-plugins/
 curl --silent -L "https://github.com/docker/buildx/releases/download/v0.5.1/buildx-v0.5.1.linux-${TRAVIS_CPU_ARCH}" > $HOME/.docker/cli-plugins/docker-buildx
 chmod a+x $HOME/.docker/cli-plugins/docker-buildx
+
+# enable use of buildx to avoid 'failed to load cache key' and
+# 'failed size validation' errors <https://stackoverflow.com/a/64776416/600339>
+docker buildx install

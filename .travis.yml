@@ -12,11 +12,6 @@ addons:
 services:
   - docker
 
-env:
-  global:
-    # Avoid odd `failed commit on ref ... failed size validation: 0 != NNNN: failed precondition` errors
-    # https://github.com/moby/moby/issues/41864
-    - DOCKER_BUILDKIT=0
 before_install:
   - env | sort
   - dig +short myip.opendns.com @resolver1.opendns.com
