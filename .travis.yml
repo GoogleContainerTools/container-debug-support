@@ -17,7 +17,6 @@ before_install:
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
   - sudo service docker restart || systemctl status docker.service
-  - 
   - docker info
 
 install: 
@@ -47,7 +46,7 @@ script:
       || (kind export logs; 
       docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
         while read image cid name; do
-          echo "=== $image ($cid): $name ===";
+          echo "=== $image ($cid) $name ===";
           docker logs $cid | sed 's/^/> /';
         done;
       travis_terminate $?)
