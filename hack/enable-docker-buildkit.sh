@@ -46,4 +46,4 @@ chmod a+x $HOME/.docker/cli-plugins/docker-buildx
 # enable use of buildx with latest buildkit to avoid 'failed to load cache key'
 # and 'failed size validation' errors from containerd
 # <https://stackoverflow.com/a/64776416/600339>
-docker buildx create --use --driver-opt image=moby/buildkit:master
+docker buildx create --use --driver-opt image=moby/buildkit:buildx-stable-1-rootless
