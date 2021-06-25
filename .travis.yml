@@ -13,6 +13,7 @@ before_install:
   - for pkg in docker docker-engine docker.io containerd runc; do sudo apt-get remove $pkg || true; done
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - arch=$(case $(uname -m) in x86_64) echo amd64;; *) uname -m;; esac);
+    echo arch=${arch};
     sudo add-apt-repository "deb [arch=${arch}] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
   - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install jq docker-ce-cli docker-ce containerd.io
