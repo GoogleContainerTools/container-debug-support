@@ -10,15 +10,10 @@ if [ "$PUSH_IMAGE" = true ]; then
         PLATFORMS=linux/amd64,linux/arm64
     fi
     loadOrPush="--platform $PLATFORMS --push"
-elif [ "$USE_BUILDX" != true ]; then
-    # cannot load multiarch images into the daemon
-    # so just use `docker build`
-    set -x
-    exec docker build "$@" --tag $IMAGE "$BUILD_CONTEXT"
 else
     # cannot load multiarch images into the daemon
-    unset PLATFORMS
-    loadOrPush="--load"
+    set -x
+    exec docker buildx build "$@" --load --tag $IMAGE "$BUILD_CONTEXT"
 fi
 
 if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
