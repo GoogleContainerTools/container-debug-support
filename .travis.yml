@@ -4,9 +4,13 @@ arch: [amd64, arm64]
 language: go
 go: "1.15.x"
 
+services:
+  # although we replace docker, ensure rest of docker is setup
+  - docker
+
 before_install:
-  # remove old packages
-  - sudo apt-get remove docker docker-engine docker.io containerd runc 
+  # remove old packages (if found), just in case
+  - sudo apt-get remove --ignore-missing docker docker-engine docker.io containerd runc 
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - arch=$(case $(uname -m) in x86_64) echo amd64;; *) uname -m;; esac); \
     sudo add-apt-repository "deb [arch=${arch}] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
