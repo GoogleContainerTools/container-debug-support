@@ -4,15 +4,18 @@ arch: [amd64, arm64]
 language: go
 go: "1.15.x"
 
+addons:
+  apt:
+    packages: [jq]
+
 before_install:
-  # remove old packages (if found), just in case
-  - for pkg in docker docker-engine docker.io containerd runc; do sudo apt-get purge --autoremove $pkg || true; done
+  - if [ -f /etc/default/docker ]; then echo "== /etc/default/docker =="; cat /etc/default/docker; fi
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - arch=$(case $(uname -m) in x86_64) echo amd64;; aarch64) echo arm64;; *) uname -m;; esac);
     echo arch=${arch};
     sudo add-apt-repository "deb [arch=${arch}] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
   - sudo apt-get update
-  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install jq docker-ce-cli docker-ce containerd.io
+  - sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce-cli docker-ce containerd.io
 
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
