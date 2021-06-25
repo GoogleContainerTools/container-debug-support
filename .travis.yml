@@ -17,6 +17,7 @@ before_install:
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
   - sudo service docker restart || systemctl status docker.service
+  - 
   - docker info
 
 install: 
@@ -43,7 +44,13 @@ script:
 
   # `kind create cluster` is very verbose
   - (kind create cluster --retain -v 1 --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config)
-      || kind export logs
+      || (kind export logs; 
+      docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
+        while read image cid name; do
+          echo "=== $image ($cid): $name ===";
+          docker logs $cid | sed 's/^/> /';
+        done;
+      travis_terminate $?)
 
   # we had `run-its.sh` in `after_success` but it doesn't cause failures
   - KUBECONFIG=/tmp/kube.config bash ./run-its.sh -p local
