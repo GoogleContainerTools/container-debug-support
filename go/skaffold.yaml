@@ -10,9 +10,6 @@ requires:
        activatedBy: [integration]
 
 build:
-  local:
-    useBuildkit: true
-    useDockerCLI: true
   artifacts:
   - image: skaffold-debug-go
     context: helper-image
@@ -45,33 +42,37 @@ profiles:
         value:
           image: go113app
           context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.13
+          custom:
+            buildCommand: docker buildx build --build-arg=GOVERSION=1.13
+              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
+              --tag $IMAGE "$BUILD_CONTEXT"
       - op: add
         path: /build/artifacts/-
         value:
           image: go114app
           context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.14
+          custom:
+            buildCommand: docker buildx build --build-arg=GOVERSION=1.14
+              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
+              --tag $IMAGE "$BUILD_CONTEXT"
       - op: add
         path: /build/artifacts/-
         value:
           image: go115app
           context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.15
+          custom:
+            buildCommand: docker buildx build --build-arg=GOVERSION=1.15
+              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
+              --tag $IMAGE "$BUILD_CONTEXT"
       - op: add
         path: /build/artifacts/-
         value:
           image: go116app
           context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.16
+          custom:
+            buildCommand: docker buildx build --build-arg=GOVERSION=1.16
+              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
+              --tag $IMAGE "$BUILD_CONTEXT"
     deploy:
       kubectl:
         manifests:

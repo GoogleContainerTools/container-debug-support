@@ -3,11 +3,6 @@ kind: Config
 metadata:
   name: integration
 
-build:
-  local:
-    useBuildkit: true
-    useDockerCLI: true
-
 deploy:
   logs:
     prefix: auto
@@ -21,9 +16,10 @@ profiles:
       artifacts:
       - image: kubectl
         context: kubectl
-        docker:
-          buildArgs:
-            GOVERSION: 1.16
+        custom:
+          buildCommand: docker buildx build --build-arg=GOVERSION=1.16
+            $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
+            --tag $IMAGE "$BUILD_CONTEXT"
     deploy:
       kubectl:
         manifests:
