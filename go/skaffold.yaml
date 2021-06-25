@@ -14,7 +14,7 @@ build:
   - image: skaffold-debug-go
     context: helper-image
     custom:
-      buildCommand: ../../buildx.sh
+      buildCommand: ../../dockerbuild.sh
 
 test:
   - image: skaffold-debug-go
@@ -43,36 +43,28 @@ profiles:
           image: go113app
           context: test/goapp
           custom:
-            buildCommand: docker buildx build --build-arg=GOVERSION=1.13
-              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
-              --tag $IMAGE "$BUILD_CONTEXT"
+            buildCommand: ../../../dockerbuild.sh --build-arg=GOVERSION=1.13
       - op: add
         path: /build/artifacts/-
         value:
           image: go114app
           context: test/goapp
           custom:
-            buildCommand: docker buildx build --build-arg=GOVERSION=1.14
-              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
-              --tag $IMAGE "$BUILD_CONTEXT"
+            buildCommand: ../../../dockerbuild.sh --build-arg=GOVERSION=1.14
       - op: add
         path: /build/artifacts/-
         value:
           image: go115app
           context: test/goapp
           custom:
-            buildCommand: docker buildx build --build-arg=GOVERSION=1.15
-              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
-              --tag $IMAGE "$BUILD_CONTEXT"
+            buildCommand: ../../../dockerbuild.sh --build-arg=GOVERSION=1.15
       - op: add
         path: /build/artifacts/-
         value:
           image: go116app
           context: test/goapp
           custom:
-            buildCommand: docker buildx build --build-arg=GOVERSION=1.16
-              $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
-              --tag $IMAGE "$BUILD_CONTEXT"
+            buildCommand: ../../../dockerbuild.sh --build-arg=GOVERSION=1.16
     deploy:
       kubectl:
         manifests:

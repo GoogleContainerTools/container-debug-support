@@ -14,7 +14,7 @@ build:
   - image: skaffold-debug-netcore
     context: helper-image
     custom:
-      buildCommand: ../../buildx.sh
+      buildCommand: ../../dockerbuild.sh
 
 test:
   - image: skaffold-debug-netcore

@@ -17,9 +17,7 @@ profiles:
       - image: kubectl
         context: kubectl
         custom:
-          buildCommand: docker buildx build --build-arg=GOVERSION=1.16
-            $(if [ "${PUSH_IMAGES}" = true ]; then echo --push; else echo --load; fi)
-            --tag $IMAGE "$BUILD_CONTEXT"
+          buildCommand: ../../dockerbuild.sh --build-arg=GOVERSION=1.16
     deploy:
       kubectl:
         manifests:

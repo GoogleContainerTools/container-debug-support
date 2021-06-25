@@ -14,7 +14,7 @@ build:
   - image: skaffold-debug-python
     context: helper-image
     custom:
-      buildCommand: ../../buildx.sh
+      buildCommand: ../../dockerbuild.sh
 
 test:
   - image: skaffold-debug-python
