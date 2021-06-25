@@ -6,7 +6,7 @@ go: "1.15.x"
 
 before_install:
   # remove old packages (if found), just in case
-  - for pkg in docker docker-engine docker.io containerd runc; do sudo apt-get remove --autoremove $pkg || true; done
+  - for pkg in docker docker-engine docker.io containerd runc; do sudo apt-get purge --autoremove $pkg || true; done
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - arch=$(case $(uname -m) in x86_64) echo amd64;; aarch64) echo arm64;; *) uname -m;; esac);
     echo arch=${arch};
