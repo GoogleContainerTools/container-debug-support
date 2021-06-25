@@ -9,7 +9,7 @@ addons:
     packages: [jq]
 
 before_install:
-  - if [ -f /etc/default/docker ]; then echo "== /etc/default/docker =="; cat /etc/default/docker; fi
+  - if [ -f /etc/default/docker ]; then echo "== /etc/default/docker =="; sudo cat /etc/default/docker; fi
   - curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
   - arch=$(case $(uname -m) in x86_64) echo amd64;; aarch64) echo arm64;; *) uname -m;; esac);
     echo arch=${arch};
@@ -30,6 +30,7 @@ install:
   - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/${TRAVIS_CPU_ARCH}/kubectl
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
+  - skaffold config set --global collect-metrics false
 
 script:
   - (cd nodejs/helper-image; go test .)
@@ -44,7 +45,8 @@ script:
     docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n  endpoint = [" $reg}}{{range $index, $mirror := $config.Mirrors}}{{if $index}},{{end}}{{printf "%q" $mirror}}{{end}}{{printf "]\n"}}{{end}}{{end}}' | tee /tmp/kind.config
 
   # `kind create cluster` is very verbose
-  - kind create cluster --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config
+  - (kind create cluster --retain -v 1 --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config)
+      || kind export logs
 
   # we had `run-its.sh` in `after_success` but it doesn't cause failures
   - KUBECONFIG=/tmp/kube.config bash ./run-its.sh -p local
