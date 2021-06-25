@@ -12,6 +12,7 @@ requires:
 build:
   local:
     useBuildkit: true
+    useDockerCLI: true
   artifacts:
   - image: skaffold-debug-netcore
     context: helper-image

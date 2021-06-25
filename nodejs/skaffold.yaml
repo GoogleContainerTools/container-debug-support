@@ -12,6 +12,7 @@ requires:
 build:
   local:
     useBuildkit: true
+    useDockerCLI: true
   artifacts:
   - image: skaffold-debug-nodejs
     context: helper-image

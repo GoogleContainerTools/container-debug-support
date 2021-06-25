@@ -3,17 +3,15 @@
 # Skaffold Custom Builder that uses `docker buildx` to perform a
 # multi-platform build.
 
-export DOCKER_BUILDKIT=1
-
-# The local Docker daemon which cannot load images for multiple architectures,
-# so just build using normal Docker.
-if [ "$PUSH_IMAGE" != true ]; then
-    set -x
-    exec docker buildx build --tag $IMAGE --load "$BUILD_CONTEXT"
-fi
-
-if [ -z "$PLATFORMS" ]; then
-    PLATFORMS=linux/amd64,linux/arm64
+if [ "$PUSH_IMAGE" = true ]; then
+    if [ -z "$PLATFORMS" ]; then
+        PLATFORMS=linux/amd64,linux/arm64
+    fi
+    loadOrPush="--platform $PLATFORMS --push"
+else
+    # cannot load multiarch images into the daemon
+    unset PLATFORMS
+    loadOrPush="--load"
 fi
 
 if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
@@ -21,15 +19,14 @@ if ! docker buildx inspect skaffold-builder >/dev/null 2>&1; then
   # Docker 3.3.0 require creating a builder within a context
   (set -x; \
     docker context create skaffold; \
-    docker buildx create --name skaffold-builder --platform $PLATFORMS skaffold)
+    docker buildx create --name skaffold-builder ${PLATFORMS:+--platform $PLATFORMS} skaffold)
 fi
 
 set -x
 docker buildx build \
   --progress=plain \
   --builder skaffold-builder \
-  --platform "$PLATFORMS" \
-  --push \
+  $loadOrPush \
   --tag $IMAGE \
   "$BUILD_CONTEXT"
 
