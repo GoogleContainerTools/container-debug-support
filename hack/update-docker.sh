@@ -24,7 +24,7 @@ dockerVersion=$(docker info -f '{{.ServerVersion}}')
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
     sudo add-apt-repository "deb [arch=$arch] https://download.docker.com/linux/ubuntu $distro stable"
     sudo apt-get update
-    sudo apt-get -y -o Dpkg::Options::="--force-confnew" install --no-install-recommends docker-ce-cli docker-ce containerd.io
+    sudo apt-get -y -o Dpkg::Options::="--force-confnew" install --no-install-recommends docker-ce-cli docker-ce containerd.io || (systemctl status docker.service; journalctl -xe)
 #else
 #    echo ">> Docker ${dockerVersion} >= 20.10"
 #fi
