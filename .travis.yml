@@ -5,9 +5,12 @@ language: go
 go: "1.15.x"
 
 addons:
+  sources:
+    # `focal` should match the `dist` above
+    - sourceline: 'deb https://download.docker.com/linux/ubuntu focal main'
+      key_url: 'https://download.docker.com/linux/ubuntu/gpg'
   apt:
-    packages:
-      - jq
+    packages: [jq, docker-ce, docker-ce-cli, containerd.io]
 
 services:
   - docker
@@ -35,7 +38,7 @@ script:
   - (cd python/helper-image/launcher; go test .)
 
   # try building before integration tests
-  - skaffold build -p local
+  - skaffold build -p local -v info -p integration || travis_terminate $?
 
   # Create a kind configuration to use the docker daemon's configured
   # registry-mirrors.
