@@ -1,5 +1,5 @@
 #!/bin/sh
-# Update Docker to 20.10.x for Ubuntu (Travis)
+# Update Docker to 20.10.x, primarily intended for Travis
 set -e
 
 debarch() {
@@ -11,13 +11,20 @@ debarch() {
 }
 
 dockerVersion=$(docker info -f '{{.ServerVersion}}')
-echo "Checking docker server version: ${dockerVersion}"
-if [ $(echo $dockerVersion | cut -d. -f1) -lt 20 -o $(echo $dockerVersion | cut -d. -f2) -lt 10 ]; then
-
-    echo ">> Updating docker for host arch $(debarch)..."
+#if [ $(echo $dockerVersion | cut -d. -f1) -lt 20 -o $(echo $dockerVersion | cut -d. -f2) -lt 10 ]; then
+    distro=$(lsb_release -cs)
+    arch=$(debarch)
+    echo ">> Updating docker from ${dockerVersion} for $distro $arch..."
+    if [ -f /etc/defaults/docker ]; then
+        echo "Removing /etc/defaults/docker. Previous contents:"
+        sudo sed 's/^/> /' /etc/defaults/docker
+        sudo rm /etc/defaults/docker
+    fi
     set -x
     curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
-    sudo add-apt-repository "deb [arch=$(debarch)] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+    sudo add-apt-repository "deb [arch=$arch] https://download.docker.com/linux/ubuntu $distro stable"
     sudo apt-get update
-    sudo apt-get -y -o Dpkg::Options::="--force-confnew" install docker-ce-cli docker-ce containerd.io
-fi
+    sudo apt-get -y -o Dpkg::Options::="--force-confnew" install --no-install-recommends docker-ce-cli docker-ce containerd.io
+#else
+#    echo ">> Docker ${dockerVersion} >= 20.10"
+#fi
