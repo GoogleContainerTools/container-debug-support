@@ -11,7 +11,7 @@ addons:
 
 before_install:
   # ensure we're using recent docker with containerd >= 1.3.4 so as to be able to use gcr mirror
-  - sh hack/update-docker.sh
+  #- sh hack/update-docker.sh
 
   # enable buildkit plus configure gcr mirror
   - sh hack/enable-docker-buildkit.sh
