@@ -9,14 +9,18 @@ addons:
   apt:
     packages: [jq]
 
+env:
+  - DOCKER_BUILDKIT=0
+
 before_install:
   # ensure we're using recent docker with containerd >= 1.3.4 so as to be able to use gcr mirror
   #- sh hack/update-docker.sh
 
   # enable buildkit plus configure gcr mirror
-  - sh hack/enable-docker-buildkit.sh
-  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  #- sh hack/enable-docker-buildkit.sh
+  #- sudo service docker restart || (systemctl status docker.service; journalctl -xe)
   - docker info
+  - sh hack/strip-buildkitisms.sh
 
 install: 
   - mkdir -p $HOME/bin
