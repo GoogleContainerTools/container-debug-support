@@ -18,8 +18,11 @@ before_install:
 
   # enable buildkit plus configure gcr mirror
   #- sh hack/enable-docker-buildkit.sh
-  #- sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  - sh hack/use-gcr-mirror.sh
+  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
   - docker info
+
+  # Remove buildkit'isms from Dockerfiles
   - sh hack/strip-buildkitisms.sh
 
 install: 

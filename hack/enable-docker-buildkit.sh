@@ -9,11 +9,7 @@ if [ -f /etc/docker/daemon.json ]; then
     # avoid `jq ... | sudo tee /etc/docker/daemon.json` as we were
     # having 0-byte files created instead (!)
     jq '.+{"experimental":true}' /etc/docker/daemon.json \
-    | jq '."registry-mirrors" -= ["https://registry.docker.io"]' \
-    | jq '."registry-mirrors" += ["https://mirror.gcr.io"]' \
     | tee /tmp/docker-daemon.json
-    echo "/tmp/docker-daemon.json:"
-    sed 's/^/> /' /tmp/docker-daemon.json
     sudo cp /tmp/docker-daemon.json /etc/docker/daemon.json
 
     echo "/etc/docker/daemon.json now:"
@@ -21,7 +17,7 @@ if [ -f /etc/docker/daemon.json ]; then
 else
     sudo mkdir -vp /etc/docker
     echo "/etc/docker/daemon.json now:"
-    echo '{"experimental":true,"registry-mirrors":["https://mirror.gcr.io"]}' \
+    echo '{"experimental":true}' \
     | sudo tee /etc/docker/daemon.json
 fi
 
