@@ -7,7 +7,7 @@ go: "1.15.x"
 service: [docker]
 addons:
   apt:
-    packages: [jq]
+    packages: [jq,conntrack]
 
 before_install:
   # ensure we're using recent docker with containerd >= 1.3.4 so as to be able to use gcr mirror
@@ -35,8 +35,7 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  # kubernetes v1.20 requires the kernel to have `conntrack`
-  - minikube start --driver=none --kubernetes-version=v1.19.12 || travis_terminate $?
+  - minikube start --driver=none || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
