@@ -35,7 +35,7 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - minikube start || travis_terminate $?
+  - minikube start --driver=none || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
