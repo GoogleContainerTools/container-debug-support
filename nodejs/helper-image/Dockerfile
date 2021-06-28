@@ -1,8 +1,8 @@
 ARG GOVERSION=1.16
-FROM --platform=$BUILDPLATFORM golang:${GOVERSION} as build
-ARG BUILDPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
+FROM golang:${GOVERSION} as build
+ARG BUILDPLATFORM=linux/arm64
+ARG TARGETOS=linux
+ARG TARGETARCH=arm64
 
 COPY . .
 # Produce an as-static-as-possible dlv binary to work on musl and glibc

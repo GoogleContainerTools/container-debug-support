@@ -1,8 +1,8 @@
 # Simple multi-platform image that includes kubectl and curl
-FROM --platform=$BUILDPLATFORM curlimages/curl
-ARG BUILDPLATFORM
-ARG TARGETOS
-ARG TARGETARCH
+FROM curlimages/curl
+ARG BUILDPLATFORM=linux/arm64
+ARG TARGETOS=linux
+ARG TARGETARCH=arm64
 
 # curlimages/curl runs as curl-user and cannot install into /usr/bin
 USER root

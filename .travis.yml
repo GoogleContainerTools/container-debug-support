@@ -1,6 +1,6 @@
 sudo: false
 dist: focal
-arch: [amd64, arm64]
+arch: [arm64] #[amd64,arm64]
 language: go
 go: "1.15.x"
 
@@ -9,54 +9,40 @@ addons:
   apt:
     packages: [jq]
 
-env:
-  - DOCKER_BUILDKIT=0
-
 before_install:
   # ensure we're using recent docker with containerd >= 1.3.4 so as to be able to use gcr mirror
   #- sh hack/update-docker.sh
 
   # enable buildkit plus configure gcr mirror
   #- sh hack/enable-docker-buildkit.sh
-  - sh hack/use-gcr-mirror.sh
-  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  #- sh hack/use-gcr-mirror.sh
+  #- sudo service docker restart || (systemctl status docker.service; journalctl -xe)
   - docker info
 
   # Remove buildkit'isms from Dockerfiles
-  - sh hack/strip-buildkitisms.sh
+  #- sh hack/strip-buildkitisms.sh
 
 install: 
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-${TRAVIS_CPU_ARCH}
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-${TRAVIS_CPU_ARCH}
-  - curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-${TRAVIS_CPU_ARCH}
+  #- curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-${TRAVIS_CPU_ARCH}
+  - curl -Lo $HOME/bin/minikube https://storage.googleapis.com/minikube-builds/master/minikube-linux-${TRAVIS_CPU_ARCH}
+
   - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/${TRAVIS_CPU_ARCH}/kubectl
   - chmod +x $HOME/bin/*
   - export PATH=$HOME/bin:$PATH
   - skaffold config set --global collect-metrics false
 
 script:
+  - minikube start || travis_terminate $?
+
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
 
   # try building before integration tests
   - skaffold build -p local -v info -p integration || travis_terminate $?
 
-  # Create a kind configuration to use the docker daemon's configured
-  # registry-mirrors.
-  - |
-    docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n  endpoint = [" $reg}}{{range $index, $mirror := $config.Mirrors}}{{if $index}},{{end}}{{printf "%q" $mirror}}{{end}}{{printf "]\n"}}{{end}}{{end}}' | tee /tmp/kind.config
-
-  # `kind create cluster` is very verbose
-  - (kind create cluster --retain -v 1 --config /tmp/kind.config && kind get kubeconfig > /tmp/kube.config)
-      || (kind export logs; 
-      docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
-        while read image cid name; do
-          echo "=== $image ($cid) $name ===";
-          docker logs $cid | sed 's/^/> /';
-        done;
-      travis_terminate $?)
-
   # we had `run-its.sh` in `after_success` but it doesn't cause failures
-  - KUBECONFIG=/tmp/kube.config bash ./run-its.sh -p local
+  - bash ./run-its.sh -p local
 

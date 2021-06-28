@@ -49,3 +49,11 @@ form produced by `skaffold debug`.  To run:
 ```sh
 sh run-its.sh
 ```
+
+# Troubleshooting
+
+## Development
+
+We use buildx to avoid 'failed to load cache key' and
+'failed size validation' errors <https://stackoverflow.com/a/64776416/600339>
+
