@@ -34,13 +34,13 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - TERM=dumb sudo minikube start --driver=none --alsologtostderr -v=4
+  - TERM=dumb sudo -E minikube start --driver=none --alsologtostderr -v=4
      --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
     || (
       echo "== systemctl status kubelet ==";
-      systemctl status kubelet;
+      sudo systemctl status kubelet;
       echo "== journalctl -xeukubelet ==";
-      journalctl -xeu kubelet;
+      sudo journalctl -xeu kubelet;
       docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
         while read image cid name; do
           echo "=== $image ($cid) $name ===";
