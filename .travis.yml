@@ -34,7 +34,7 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - TERM=dumb sudo -E minikube start --driver=none --alsologtostderr -v=4
+  - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=4
      --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
     || (
       echo "== systemctl status kubelet ==";
