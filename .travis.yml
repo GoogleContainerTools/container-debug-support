@@ -35,7 +35,8 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - minikube start --driver=none || travis_terminate $?
+  # kubernetes v1.20 requires the kernel to have `conntrack`
+  - minikube start --driver=none --kubernetes-version=v1.19.12 || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
