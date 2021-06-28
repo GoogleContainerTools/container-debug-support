@@ -47,8 +47,8 @@ script:
     || (
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
-      echo "== journalctl -xeu kubelet ==";
-      sudo journalctl -xeu kubelet;
+      echo "== journalctl -xeu -n 100 kubelet ==";
+      sudo journalctl -xeu -n 100 kubelet;
       docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
         while read image cid name; do
           echo "=== $image ($cid) $name ===";
