@@ -36,7 +36,17 @@ install:
 script:
   - TERM=dumb sudo minikube start --driver=none --alsologtostderr -v=4
      --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
-    || travis_terminate $?
+    || (
+      echo "== systemctl status kubelet ==";
+      systemctl status kubelet;
+      echo "== journalctl -xeukubelet ==";
+      journalctl -xeu kubelet;
+      docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
+        while read image cid name; do
+          echo "=== $image ($cid) $name ===";
+          docker logs $cid | sed 's/^/> /';
+        done;
+        travis_terminate $?)
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
