@@ -34,7 +34,8 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - TERM=dumb minikube start --driver=none --extra-config="kubeadm.ignore-preflight-errors=SystemVerification" \
+  # --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
+  - TERM=dumb sudo minikube start --driver=none
     || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
