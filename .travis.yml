@@ -44,7 +44,7 @@ install:
 script:
   #  --extra-config="kubeadm.ignore-preflight-errors=all"
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
-    || {
+    || (
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
       echo "== journalctl -xeu kubelet ==";
@@ -54,7 +54,8 @@ script:
           echo "=== $image ($cid) $name ===";
           docker logs $cid | sed 's/^/> /';
         done;
-      travis_terminate $?}
+      exit 1) 
+    || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
