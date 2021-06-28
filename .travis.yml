@@ -15,7 +15,12 @@ before_install:
   #- sh hack/update-docker.sh
 
   - sh hack/docker-systemd.sh
-  - sudo systemctl enable docker.service || (systemctl status docker.service; journalctl -xe docker.service)
+  # newer ubuntu may be masking unit files for docker? https://stackoverflow.com/a/37640824/600339
+  - sudo systemctl unmask docker.service
+  - sudo systemctl unmask docker.socket
+  - sudo systemctl daemon-reload 
+  - sudo systemctl start docker || journalctl -xe docker.service
+  - sudo systemctl status docker
   - docker info
 
   # Remove buildkit'isms from Dockerfiles
@@ -37,9 +42,9 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  #  --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
+  #  --extra-config="kubeadm.ignore-preflight-errors=all"
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
-    || (
+    || {
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
       echo "== journalctl -xeu kubelet ==";
@@ -49,7 +54,7 @@ script:
           echo "=== $image ($cid) $name ===";
           docker logs $cid | sed 's/^/> /';
         done;
-        travis_terminate $?)
+      travis_terminate $?}
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)

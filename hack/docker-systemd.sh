@@ -13,3 +13,6 @@ cat <<EOF >/tmp/daemon.json
 EOF
 
 sudo cp /tmp/daemon.json /etc/docker/daemon.json
+
+echo "== /etc/docker/daemon.json =="
+sed 's/^/> /' /etc/docker/daemon.json
