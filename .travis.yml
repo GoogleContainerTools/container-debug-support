@@ -15,11 +15,14 @@ before_install:
   #- sh hack/update-docker.sh
 
   - sh hack/docker-systemd.sh
-  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  - sudo systemctl enable docker.service || (systemctl status docker.service; journalctl -xe docker.service)
   - docker info
 
   # Remove buildkit'isms from Dockerfiles
   #- sh hack/strip-buildkitisms.sh
+
+  # quell kubeadm complaints of `unable to load kernel module: "configs"`
+  - sudo apt-get install linux-image-$(uname -r)
 
 install: 
   - mkdir -p $HOME/bin
@@ -35,11 +38,11 @@ install:
 
 script:
   #  --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
-  - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=4
+  - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
     || (
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
-      echo "== journalctl -xeukubelet ==";
+      echo "== journalctl -xeu kubelet ==";
       sudo journalctl -xeu kubelet;
       docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
         while read image cid name; do
