@@ -7,16 +7,15 @@ go: "1.15.x"
 service: [docker]
 addons:
   apt:
-    packages: [jq,conntrack]
+    # conntrack, socat required by kubeadm
+    packages: [jq,conntrack,socat]
 
 before_install:
   # ensure we're using recent docker with containerd >= 1.3.4 so as to be able to use gcr mirror
   #- sh hack/update-docker.sh
 
-  # enable buildkit plus configure gcr mirror
-  #- sh hack/enable-docker-buildkit.sh
-  #- sh hack/use-gcr-mirror.sh
-  #- sudo service docker restart || (systemctl status docker.service; journalctl -xe)
+  - sh hack/docker-systemd.sh
+  - sudo service docker restart || (systemctl status docker.service; journalctl -xe)
   - docker info
 
   # Remove buildkit'isms from Dockerfiles
@@ -35,7 +34,8 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - minikube start --driver=none || travis_terminate $?
+  - TERM=dumb minikube start --driver=none --extra-config="--ignore-preflight-errors=SystemVerification" \
+    || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
   - (cd python/helper-image/launcher; go test .)
