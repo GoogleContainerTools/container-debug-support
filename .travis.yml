@@ -35,7 +35,7 @@ install:
 
 script:
   # --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
-  - TERM=dumb sudo minikube start --driver=none
+  - TERM=dumb sudo minikube start --driver=none --alsologtostderr -v=4
     || travis_terminate $?
 
   - (cd nodejs/helper-image; go test .)
