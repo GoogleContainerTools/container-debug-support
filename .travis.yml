@@ -25,8 +25,8 @@ install:
   - mkdir -p $HOME/bin
   - curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-${TRAVIS_CPU_ARCH}
   - curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-${TRAVIS_CPU_ARCH}
-  #- curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-${TRAVIS_CPU_ARCH}
-  - curl -Lo $HOME/bin/minikube https://storage.googleapis.com/minikube-builds/master/minikube-linux-${TRAVIS_CPU_ARCH}
+  #- curl -Lo $HOME/bin/minikube https://storage.googleapis.com/minikube-builds/master/minikube-linux-${TRAVIS_CPU_ARCH}
+  - curl -Lo $HOME/bin/minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-${TRAVIS_CPU_ARCH}
 
   - curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/${TRAVIS_CPU_ARCH}/kubectl
   - chmod +x $HOME/bin/*
@@ -34,8 +34,8 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
+  #  --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=4
-     --extra-config="kubeadm.ignore-preflight-errors=SystemVerification"
     || (
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
