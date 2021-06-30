@@ -42,9 +42,9 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
+  - lsof -P +c0 -iTCP -sTCP:LISTEN
   - if [ ! -e /dev/kmsg ]; then sudo ln -s /dev/console /dev/kmsg; fi
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
-       --extra-config=kubeadm.ignore-preflight-errors=all
        --feature-gates="LocalStorageCapacityIsolation=false"
     || (
       echo "== systemctl status kubelet ==";
