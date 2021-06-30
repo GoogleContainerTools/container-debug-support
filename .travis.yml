@@ -42,19 +42,20 @@ install:
   - skaffold config set --global collect-metrics false
 
 script:
-  - lsof -P +c0 -iTCP -sTCP:LISTEN
   - if [ ! -e /dev/kmsg ]; then sudo ln -s /dev/console /dev/kmsg; fi
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
        --feature-gates="LocalStorageCapacityIsolation=false"
-       --apiserver-port=8440
+       --extra-config=kubelet.ProtectKernelDefaults=true
     || (
+      echo "== docker ps ==";
+      docker ps;
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
       echo "== journalctl -u kubelet -n all ==";
       sudo journalctl -u kubelet -n all;
       docker ps -a --format '{{.Image}} {{.ID}} {{.Names}}' |
         while read image cid name; do
-          echo "=== $image ($cid) $name ===";
+          echo "=== docker log $cid ($image $name) ===";
           docker logs $cid | sed 's/^/> /';
         done;
       exit 1) 
