@@ -46,6 +46,7 @@ script:
   - if [ ! -e /dev/kmsg ]; then sudo ln -s /dev/console /dev/kmsg; fi
   - TERM=dumb sudo -E $HOME/bin/minikube start --driver=none --alsologtostderr -v=5
        --feature-gates="LocalStorageCapacityIsolation=false"
+       --apiserver-port=8440
     || (
       echo "== systemctl status kubelet ==";
       sudo systemctl status kubelet;
