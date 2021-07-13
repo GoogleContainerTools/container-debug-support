@@ -235,14 +235,14 @@ func TestDeterminePythonMajorMinor(t *testing.T) {
 	}
 }
 
-func TestLaunch(t *testing.T) {
+func TestPrepare(t *testing.T) {
 	dbgRoot = t.TempDir()
 
 	tests := []struct {
 		description string
 		pc          pythonContext
 		commands    commands
-		shouldErr   bool
+		shouldFail  bool
 		expected    pythonContext
 	}{
 		{
@@ -250,42 +250,66 @@ func TestLaunch(t *testing.T) {
 			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}),
-			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
 		},
 		{
 			description: "debugpy with wait",
 			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: true, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "debugpy", "--listen", "2345", "--wait-for-client", "app.py"}),
-			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: true, args: []string{"python", "-m", "debugpy", "--listen", "2345", "--wait-for-client", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: true, major: 3, minor: 7, args: []string{"python", "-m", "debugpy", "--listen", "2345", "--wait-for-client", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
 		},
 		{
 			description: "ptvsd",
 			pc:          pythonContext{debugMode: "ptvsd", port: 2345, wait: false, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "app.py"}),
-			expected: pythonContext{debugMode: "ptvsd", port: 2345, wait: false, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "ptvsd", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
 		},
 		{
 			description: "ptvsd with wait",
 			pc:          pythonContext{debugMode: "ptvsd", port: 2345, wait: true, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "--wait", "app.py"}),
-			expected: pythonContext{debugMode: "ptvsd", port: 2345, wait: true, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "--wait", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "ptvsd", port: 2345, wait: true, major: 3, minor: 7, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "--wait", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
 		},
 		{
 			description: "pydevd",
 			pc:          pythonContext{debugMode: "pydevd", port: 2345, wait: false, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "pydevd", "--server", "--port", "2345", "--continue", "--file", "app.py"}),
-			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: false, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--continue", "--file", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--continue", "--file", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
 		},
 		{
 			description: "pydevd with wait",
 			pc:          pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
 				AndRunCmd([]string{"python", "-m", "pydevd", "--server", "--port", "2345", "--file", "app.py"}),
-			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--file", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
+			expected: pythonContext{debugMode: "pydevd", port: 2345, wait: true, major: 3, minor: 7, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--file", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/pydevd/python3.7/lib/python3.7/site-packages"}},
+		},
+		{
+			description: "WRAPPER_ENABLED=false",
+			pc:          pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "app.py"}, env: map[string]string{"WRAPPER_ENABLED": "false"}},
+			shouldFail:  true,
+			expected:    pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "app.py"}, env: map[string]string{"WRAPPER_ENABLED": "false"}},
+		},
+		{
+			description: "already configured with debugpy",
+			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}},
+			shouldFail:  true,
+			expected:    pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}},
+		},
+		{
+			description: "already configured with ptvsd",
+			pc:          pythonContext{debugMode: "ptvsd", port: 2345, wait: true, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "--wait", "app.py"}},
+			shouldFail:  true,
+			expected:    pythonContext{debugMode: "ptvsd", port: 2345, wait: true, args: []string{"python", "-m", "ptvsd", "--host", "localhost", "--port", "2345", "--wait", "app.py"}},
+		},
+		{
+			description: "already configured with pydevd",
+			pc:          pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--file", "app.py"}},
+			shouldFail:  true,
+			expected:    pythonContext{debugMode: "pydevd", port: 2345, wait: true, args: []string{"python", "-m", "pydevd", "--server", "--port", "2345", "--file", "app.py"}},
 		},
 	}
 
@@ -293,12 +317,12 @@ func TestLaunch(t *testing.T) {
 		t.Run(test.description, func(t *testing.T) {
 			test.commands.Setup(t)
 			pc := test.pc
-			err := pc.launch(context.TODO())
+			result := pc.prepare(context.TODO())
 
-			if test.shouldErr && err == nil {
-				t.Error("expected error")
-			} else if !test.shouldErr && err != nil {
-				t.Error("unexpected error:", err)
+			if test.shouldFail && result == true {
+				t.Error("prepare() should have failed")
+			} else if !test.shouldFail && !result {
+				t.Error("prepare() should have succeeded")
 			} else if diff := cmp.Diff(test.expected, pc, cmp.AllowUnexported(test.expected)); diff != "" {
 				_t.Errorf("%T differ (-got, +want): %s", pc, diff)
 			}
