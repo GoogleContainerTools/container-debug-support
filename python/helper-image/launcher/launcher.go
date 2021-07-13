@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,15 @@ limitations under the License.
 
 // A `skaffold debug` launcher for Python.
 //
-// Python introduces some quirks.  There are now three
-// methods for hooking up a debugging backend:
+// Configuring a Python app for debugging is quirky.  There are
+// four debugging backends:
 //
 // - pydevd: the stock Python debugging backend
 // - pydevd-pycharm: PyDev with modifications for IntelliJ/PyCharm
 // - ptvsd: wraps pydevd with the debug-adapter protocol (obsolete)
 // - debugpy: new and improved ptvsd
 //
-// pydevd has pyx libraries which are specific to particular versions of Python.
+// Each has pyx libraries which are specific to particular versions of Python.
 //
 // Further complicating matters is that a number of Python packages
 // use launcher scripts (e.g., gunicorn), and so we can't simply run
@@ -37,14 +37,18 @@ limitations under the License.
 // not that unusual to have a `python`, `python3`, and `python2`
 // scripts that invoke different python installations.
 //
+// And hence the introduction of this debug launcher.
+//
 // This launcher is expected to be invoked as follows:
 //
 //    launcher --mode <pydevd|pydevd-pycharm|debugpy|ptvsd> \
 //        --port p [--wait] -- original-command-line ...
 //
-// This launcher will determine the python executable based on the `original-command-line`.
-// The launcher will configure the PYTHONPATH to point to the appropriate installation
-// of pydevd/debugpy/ptvsd for the corresponding python binary.
+// This launcher determines the python executable based on
+// `original-command-line`, unwrapping any python scripts, and
+// configures the debugging back-end.
+// The launcher configures the PYTHONPATH to point to the appropriate
+// installation pydevd/debugpy/ptvsd for the corresponding python binary.
 //
 // debugpy and ptvsd are pretty straightforward translations of the
 // launcher command-line `python -m debugpy`.
@@ -64,6 +68,19 @@ limitations under the License.
 // python -m pydevd --server --port 5678 --DEBUG --continue \
 //   --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
 // ```
+//
+// The launcher can be configured through several environment
+// variables:
+//
+// - Set `WRAPPER_ENABLED=false` to disable the launcher: the
+//   launcher will execute the original-command-line as-is.
+// - Set `WRAPPER_SKIP_ENV=true` to avoid setting PYTHONPATH
+//   to point to bundled debugging backends: this is useful if
+//   your app already includes `debugpy`.
+// - Set `WRAPPER_PYTHON_VERSION=3.9` to avoid trying to determine
+//   the python version by executing `python -V`
+// - Set `WRAPPER_VERBOSE` to one of `error`, `warn`, `info`, `debug`,
+//   or `trace` to reduce or increase the verbosity
 package main
 
 import (
@@ -129,10 +146,10 @@ func main() {
 		logrus.Fatal("expected python command-line args")
 	}
 	pc.args = flag.Args()
-	logrus.Debugf("app command-line: %v", pc.args)
+	logrus.Debug("app command-line: ", pc.args)
 
 	if !pc.prepare(ctx) {
-		logrus.Infof("launching original command: %v", flag.Args())
+		logrus.Info("launching original command: ", flag.Args())
 		cmd := newConsoleCommand(ctx, flag.Args(), env)
 		run(cmd)
 	} else {
@@ -205,8 +222,7 @@ func (pc *pythonContext) launch(ctx context.Context) {
 }
 
 // alreadyConfigured tries to determine if the python command-line is already configured
-// for debugging.  Only handles simple command-lines; users should set `WRAPPER_ENABLED=false`
-// for more complicated situations.
+// for debugging.
 func (pc *pythonContext) alreadyConfigured() bool {
 	// TODO: consider handling `#!/usr/bin/env python` too, though `pip install` seems
 	// to hard-code the python location instead.
