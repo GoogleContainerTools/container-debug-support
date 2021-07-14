@@ -5,7 +5,7 @@ Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
 You may obtain a copy of the License at
 
-    http://www.apache.org/licenses/LICENSE-2.0
+http://www.apache.org/licenses/LICENSE-2.0
 
 Unless required by applicable law or agreed to in writing, software
 distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,15 +16,15 @@ limitations under the License.
 
 // A `skaffold debug` launcher for Python.
 //
-// Python introduces some quirks.  There are now three
-// methods for hooking up a debugging backend:
+// Configuring a Python app for debugging is quirky.  There are
+// four debugging backends:
 //
 // - pydevd: the stock Python debugging backend
 // - pydevd-pycharm: PyDev with modifications for IntelliJ/PyCharm
 // - ptvsd: wraps pydevd with the debug-adapter protocol (obsolete)
 // - debugpy: new and improved ptvsd
 //
-// pydevd has pyx libraries which are specific to particular versions of Python.
+// Each has pyx libraries which are specific to particular versions of Python.
 //
 // Further complicating matters is that a number of Python packages
 // use launcher scripts (e.g., gunicorn), and so we can't simply run
@@ -37,14 +37,18 @@ limitations under the License.
 // not that unusual to have a `python`, `python3`, and `python2`
 // scripts that invoke different python installations.
 //
+// And hence the introduction of this debug launcher.
+//
 // This launcher is expected to be invoked as follows:
 //
 //    launcher --mode <pydevd|pydevd-pycharm|debugpy|ptvsd> \
 //        --port p [--wait] -- original-command-line ...
 //
-// This launcher will determine the python executable based on the `original-command-line`.
-// The launcher will configure the PYTHONPATH to point to the appropriate installation
-// of pydevd/debugpy/ptvsd for the corresponding python binary.
+// This launcher determines the python executable based on
+// `original-command-line`, unwrapping any python scripts, and
+// configures the debugging back-end.
+// The launcher configures the PYTHONPATH to point to the appropriate
+// installation pydevd/debugpy/ptvsd for the corresponding python binary.
 //
 // debugpy and ptvsd are pretty straightforward translations of the
 // launcher command-line `python -m debugpy`.
@@ -64,10 +68,24 @@ limitations under the License.
 // python -m pydevd --server --port 5678 --DEBUG --continue \
 //   --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
 // ```
+//
+// The launcher can be configured through several environment
+// variables:
+//
+// - Set `WRAPPER_ENABLED=false` to disable the launcher: the
+//   launcher will execute the original-command-line as-is.
+// - Set `WRAPPER_SKIP_ENV=true` to avoid setting PYTHONPATH
+//   to point to bundled debugging backends: this is useful if
+//   your app already includes `debugpy`.
+// - Set `WRAPPER_PYTHON_VERSION=3.9` to avoid trying to determine
+//   the python version by executing `python -V`
+// - Set `WRAPPER_VERBOSE` to one of `error`, `warn`, `info`, `debug`,
+//   or `trace` to reduce or increase the verbosity
 package main
 
 import (
 	"context"
+	"errors"
 	"flag"
 	"fmt"
 	"io"
@@ -103,13 +121,15 @@ type pythonContext struct {
 
 	args []string
 	env  env
+
+	major, minor int // python version
 }
 
 func main() {
 	ctx := context.Background()
 	env := EnvFromPairs(os.Environ())
 	logrus.SetLevel(logrusLevel(env))
-	logrus.Debug("launcher args:", os.Args[1:])
+	logrus.Trace("launcher args:", os.Args[1:])
 
 	pc := pythonContext{env: env}
 	flag.StringVar(&dbgRoot, "helpers", "/dbg", "base location for skaffold-debug helpers")
@@ -126,11 +146,16 @@ func main() {
 		logrus.Fatal("expected python command-line args")
 	}
 	pc.args = flag.Args()
-	logrus.Tracef("command-line: %v", pc.args)
+	logrus.Debug("app command-line: ", pc.args)
 
-	if err := pc.launch(ctx); err != nil {
-		logrus.Fatalf("error launching python debugging: %v", err)
+	if !pc.prepare(ctx) {
+		logrus.Info("launching original command: ", flag.Args())
+		cmd := newConsoleCommand(ctx, flag.Args(), env)
+		run(cmd)
+	} else {
+		pc.launch(ctx)
 	}
+	// NOTREACHED
 }
 
 // validateDebugMode ensures the provided mode is a supported mode.
@@ -143,40 +168,61 @@ func validateDebugMode(mode string) error {
 	}
 }
 
-func (pc *pythonContext) launch(ctx context.Context) error {
+func run(cmd commander) {
+	if err := cmd.Run(); err != nil {
+		var ee exec.ExitError
+		if errors.Is(err, &ee) {
+			os.Exit(ee.ExitCode())
+		}
+		logrus.Fatal("error launching python debugging: ", err)
+	}
+	os.Exit(0)
+	// NOTREACHED
+}
+
+// prepare sets up the debugging command line.  Return true if successful or false if setup could not be completed.
+func (pc *pythonContext) prepare(ctx context.Context) bool {
 	if !isEnabled(pc.env) {
-		logrus.Infof("wrapper disabled, launching %v", pc.args)
-		cmd := newConsoleCommand(ctx, pc.args, pc.env)
-		return cmd.Run()
+		logrus.Infof("wrapper disabled")
+		return false
 	}
 	if pc.alreadyConfigured() {
 		logrus.Infof("already configured for debugging")
-		cmd := newConsoleCommand(ctx, pc.args, pc.env)
-		return cmd.Run()
+		return false
 	}
 
 	// rewrite the command-line by expanding script shebangs to run python and launch the app
 	if err := pc.unwrapLauncher(ctx); err != nil {
-		return err
+		logrus.Warn("unable to determine launcher: ", err)
+		return false
+	}
+	if err := pc.isPythonLauncher(ctx); err != nil {
+		logrus.Warn("not a python launcher: ", err)
+		return false
 	}
 
 	// set PYTHONPATH to point to the appropriate library for the given python version.
 	if err := pc.updateEnv(ctx); err != nil {
-		return err
+		logrus.Warn("unable to configure environment: ", err)
+		return false
 	}
 	// so pc.args[0] should be the python interpreter
 
 	if err := pc.updateCommandLine(ctx); err != nil {
-		return err
+		logrus.Warn("unable to setup launcher: ", err)
+		return false
 	}
+	return true
+}
 
+func (pc *pythonContext) launch(ctx context.Context) {
 	cmd := newConsoleCommand(ctx, pc.args, pc.env)
-	return cmd.Run()
+	run(cmd)
+	// NOTREACHED
 }
 
 // alreadyConfigured tries to determine if the python command-line is already configured
-// for debugging.  Only handles simple command-lines; users should set `WRAPPER_ENABLED=false`
-// for more complicated situations.
+// for debugging.
 func (pc *pythonContext) alreadyConfigured() bool {
 	// TODO: consider handling `#!/usr/bin/env python` too, though `pip install` seems
 	// to hard-code the python location instead.
@@ -252,6 +298,13 @@ func (pc *pythonContext) unwrapLauncher(_ context.Context) error {
 	return nil
 }
 
+func (pc *pythonContext) isPythonLauncher(ctx context.Context) error {
+	major, minor, err := determinePythonMajorMinor(ctx, pc.args[0], pc.env)
+	pc.major = major
+	pc.minor = minor
+	return err
+}
+
 func (pc *pythonContext) updateEnv(ctx context.Context) error {
 	// Perhaps we should check PYTHONPATH or ~/.local to see if the user has already
 	// installed one of our supported debug libraries
@@ -269,13 +322,6 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 		return fmt.Errorf("skaffold-debug helpers are inaccessible at %q: %w", dbgRoot, err)
 	}
 
-	major, minor, err := determinePythonMajorMinor(ctx, pc.args[0], pc.env)
-	if err != nil {
-		// We could skip setting PYTHONPATH in the hopes that the appropaite
-		// debugger library was installed explicitly by the user?
-		return fmt.Errorf("unable to determine python version from %q: %w", pc.args[0], err)
-	}
-
 	if pc.env == nil {
 		pc.env = env{}
 	}
@@ -284,18 +330,18 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 	var libraryPath string
 	switch pc.debugMode {
 	case ModePtvsd, ModeDebugpy:
-		libraryPath = fmt.Sprintf(dbgRoot+"/python/lib/python%d.%d/site-packages", major, minor)
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/lib/python%d.%d/site-packages", pc.major, pc.minor)
 
 	case ModePydevd:
-		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd/python%d.%d/lib/python%d.%d/site-packages", pc.major, pc.minor, pc.major, pc.minor)
 
 	case ModePydevdPycharm:
-		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/lib/python%d.%d/site-packages", major, minor, major, minor)
+		libraryPath = fmt.Sprintf(dbgRoot+"/python/pydevd-pycharm/python%d.%d/lib/python%d.%d/site-packages", pc.major, pc.minor, pc.major, pc.minor)
 	}
 	if libraryPath != "" {
 		if !pathExists(libraryPath) {
 			// Warn as the user may have installed debugpy themselves
-			logrus.Warnf("Debugging support for Python %d.%d not found: may require manually installing %q", major, minor, pc.debugMode)
+			logrus.Warnf("Debugging support for Python %d.%d not found: may require manually installing %q", pc.major, pc.minor, pc.debugMode)
 		}
 		// Append to ensure user-configured values are found first.
 		pc.env.AppendFilepath("PYTHONPATH", libraryPath)
@@ -353,12 +399,13 @@ func determinePythonMajorMinor(ctx context.Context, launcherBin string, env env)
 	var versionString string
 	if env["WRAPPER_PYTHON_VERSION"] != "" {
 		versionString = env["WRAPPER_PYTHON_VERSION"]
+		logrus.Debugf("Python version from WRAPPER_PYTHON_VERSION=%q", versionString)
 	} else {
+		logrus.Debugf("trying to determine python version from %q", launcherBin)
 		cmd := newCommand(ctx, []string{launcherBin, "-V"}, env)
 		out, err := cmd.CombinedOutput()
 		if err != nil {
-			logrus.Warnf("'%s -V' errored: %v", launcherBin, err)
-			return -1, -1, err
+			return -1, -1, fmt.Errorf("unable to determine python version from %q: %w", launcherBin, err)
 		}
 		versionString = string(out)
 		logrus.Debugf("'%s -V' = %q", launcherBin, versionString)
