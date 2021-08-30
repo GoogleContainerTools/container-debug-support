@@ -13,8 +13,6 @@ jobs:
 
   test:
     runs-on: ubuntu-latest
-    strategy:
-      fails-fast: true
     steps:
     - uses: actions/setup-go@v2
       with:
