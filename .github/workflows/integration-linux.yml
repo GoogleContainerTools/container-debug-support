@@ -1,0 +1,61 @@
+name: integration tests (linux)
+
+on: [push, pull_request, workflow_dispatch]
+
+permissions: read-all
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      fails-fast: true
+    steps:
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ^1.16
+
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0
+
+    - uses: actions/cache@v2
+      with:
+        path: ~/go/pkg/mod
+        key: ${{ runner.os }}-gopkgmod-${{ hashFiles('**/go.sum') }}
+        restore-keys: |
+          ${{ runner.os }}-gopkgmod
+
+    - name: Install required tools
+      run: |
+        set -e
+        mkdir -p $HOME/bin
+        curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
+        curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
+        curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.9.0/kind-linux-amd64
+        curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+        chmod +x $HOME/bin/*
+        export PATH=$HOME/bin:$PATH
+
+    - name: Run nodejs helper tests
+      run: |
+        set -e
+        (cd nodejs/helper-image; go test .)
+
+    - name: Run python helper tests
+      run: |
+        set -e
+        (cd python/helper-image/launcher; go test .)
+
+    - name: Run image build
+      run: |
+        set -e
+        # Create a kind configuration to use the docker daemon's configured registry-mirrors.
+        docker system info --format '{{printf "apiVersion: kind.x-k8s.io/v1alpha4\nkind: Cluster\ncontainerdConfigPatches:\n"}}{{range $reg, $config := .RegistryConfig.IndexConfigs}}{{if $config.Mirrors}}{{printf "- |-\n  [plugins.\"io.containerd.grpc.v1.cri\".registry.mirrors.\"%s\"]\n    endpoint = %q\n" $reg $config.Mirrors}}{{end}}{{end}}' > /tmp/kind.config
+
+        # `kind create cluster` is very verbose
+        kind create cluster --quiet --config /tmp/kind.config
+        kind get kubeconfig > /tmp/kube.config
+
+        # we had `run-its.sh` in `after_success` but it doesn't cause failures
+        KUBECONFIG=/tmp/kube.config bash ./run-its.sh
