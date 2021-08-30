@@ -1,6 +1,11 @@
 name: integration tests (linux)
 
-on: [push, pull_request, workflow_dispatch]
+on:
+  push:
+    branches: [ duct-tape ]
+  pull_request:
+    branches: [ duct-tape ]
+  workflow_dispatch:
 
 permissions: read-all
 
