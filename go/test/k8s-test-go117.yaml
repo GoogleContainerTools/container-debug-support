@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go114pod
+  name: go117pod
   labels:
     app: hello
     protocol: dlv
-    runtime: go114
+    runtime: go117
 spec:
   containers:
-  - name: go114app
-    image: go114app
+  - name: go117app
+    image: go117app
     args:
     - /dbg/go/bin/dlv
     - exec
@@ -21,7 +21,6 @@ spec:
     # listen on 0.0.0.0 as it is exposed as a service
     - --listen=0.0.0.0:56286
     - --api-version=2
-    - --check-go-version=false
     - ./app
     ports:
     - containerPort: 8080
@@ -49,7 +48,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-dlv-go114
+  name: hello-dlv-go117
 spec:
   ports:
   - name: http
@@ -61,13 +60,13 @@ spec:
   selector:
     app: hello
     protocol: dlv
-    runtime: go114
+    runtime: go117
 
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: connect-to-go114
+  name: connect-to-go117
   labels:
     project: container-debug-support
     type: integration-test
@@ -78,15 +77,15 @@ spec:
     spec:
       restartPolicy: Never
       initContainers:
-      - name: wait-for-go114pod
+      - name: wait-for-go117pod
         image: kubectl
-        command: [sh, -c, "while ! curl -s hello-dlv-go114:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
+        command: [sh, -c, "while ! curl -s hello-dlv-go117:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
       containers:
-      - name: dlv-to-go114
+      - name: dlv-to-go117
         image: skaffold-debug-go
         command: [sh, -c, '
           (echo bt; echo exit -c) > init.txt;
           set -x;
-          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go114:56286']
+          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go117:56286']
 
 
