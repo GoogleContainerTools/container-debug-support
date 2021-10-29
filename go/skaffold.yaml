@@ -71,6 +71,14 @@ profiles:
           docker:
             buildArgs:
               GOVERSION: 1.16
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go117app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.17
     deploy:
       kubectl:
         manifests:
@@ -78,6 +86,7 @@ profiles:
           - test/k8s-test-go114.yaml
           - test/k8s-test-go115.yaml
           - test/k8s-test-go116.yaml
+          - test/k8s-test-go117.yaml
 
   # release: pushes images to production with :latest
   - name: release

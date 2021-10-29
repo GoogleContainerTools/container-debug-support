@@ -22,7 +22,7 @@ profiles:
         context: kubectl
         docker:
           buildArgs:
-            GOVERSION: 1.16
+            GOVERSION: 1.17
     deploy:
       kubectl:
         manifests:
