@@ -21,7 +21,6 @@ spec:
     # listen on 0.0.0.0 as it is exposed as a service
     - --listen=0.0.0.0:56286
     - --api-version=2
-    - --check-go-version=false
     - ./app
     ports:
     - containerPort: 8080
