@@ -6,17 +6,17 @@ metadata:
 requires:
   - path: ../integration
     activeProfiles:
-     - name: integration
-       activatedBy: [integration]
+      - name: integration
+        activatedBy: [integration]
 
 build:
   local:
     useBuildkit: true
   artifacts:
-  - image: skaffold-debug-go
-    context: helper-image
-    custom:
-      buildCommand: ../../buildx.sh
+    - image: skaffold-debug-go
+      context: helper-image
+      custom:
+        buildCommand: ../../buildx.sh
 
 test:
   - image: skaffold-debug-go
@@ -26,10 +26,9 @@ deploy:
   logs:
     prefix: auto
   kubectl:
-    manifests: []   # overwritten in integration profile
+    manifests: [] # overwritten in integration profile
 
 profiles:
-
   # local: never push to remote registries
   - name: local
     build:
@@ -71,6 +70,14 @@ profiles:
           docker:
             buildArgs:
               GOVERSION: 1.16
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go117app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.17
     deploy:
       kubectl:
         manifests:
@@ -78,6 +85,7 @@ profiles:
           - test/k8s-test-go114.yaml
           - test/k8s-test-go115.yaml
           - test/k8s-test-go116.yaml
+          - test/k8s-test-go117.yaml
 
   # release: pushes images to production with :latest
   - name: release
@@ -100,4 +108,3 @@ profiles:
         path: /test/0/image
         from: skaffold-debug-go
         value: go
-
