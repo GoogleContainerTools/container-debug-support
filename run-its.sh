@@ -1,4 +1,13 @@
 #!/bin/bash
+# Run Integration Tests
+# Can be called either from the top-level directory or from any of
+# the language-specific images.
+#
+# $ sh run-its.sh
+# $ (cd go; sh ../run-its.sh)
+#
+# Integration tests are set up as a set of Jobs.  This script launches
+# a set of Pods and the Jobs, and then waits for the Jobs to complete.
 
 set -euo pipefail
 
@@ -22,6 +31,7 @@ while [ $jobcount -eq 0 -o $jobcount -ne $(countTestJobs) ]; do
     jobcount=$(countTestJobs)
     sleep 5
 done
+
 echo ">> Monitoring for test job completion [$(date)]"
 kubectl wait --for=condition=complete job.batch \
     -l project=container-debug-support,type=integration-test
