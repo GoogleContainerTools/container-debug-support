@@ -6,21 +6,21 @@ ARG TARGETARCH
 
 ARG DELVE_VERSION=1.7.2
 
-RUN curl --location --output delve-$DELVE_VERSION.tar.gz https://github.com/go-delve/delve/archive/v$DELVE_VERSION.tar.gz \
-  && tar xzf delve-$DELVE_VERSION.tar.gz \
-  && mv delve-$DELVE_VERSION delve-source
-
 # Patch delve to change default for --only-same-user to false
 # Required as `kubectl port-forward` to dlv port is refused.
 # We must install patch(1) to apply the patch.
-COPY delve-*.patch .
 RUN apt-get update && apt-get install -y --no-install-recommends \
-  patch \
-  && patch -p0 -d delve-source < delve-only-same-user.patch \
+  patch
+RUN curl --location --output delve.tar.gz https://github.com/go-delve/delve/archive/v$DELVE_VERSION.tar.gz \
+  && tar xzf delve.tar.gz \
+  && mv delve-$DELVE_VERSION delve-source
+COPY delve-*.patch .
+RUN patch -p0 -d delve-source < delve-only-same-user.patch \
   && patch -p0 -d delve-source < delve-pr2684.patch
 
 # Produce an as-static-as-possible dlv binary to work on musl and glibc
-RUN cd delve-source && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /go/dlv -ldflags '-s -w -extldflags "-static"' ./cmd/dlv/
+RUN cd delve-source \
+  && CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -o /go/dlv -ldflags '-s -w -extldflags "-static"' ./cmd/dlv/
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
