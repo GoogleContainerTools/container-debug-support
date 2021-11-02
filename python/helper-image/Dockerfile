@@ -69,7 +69,7 @@ COPY pydevd.patch .
 RUN patch -p0 -d /dbgpy/pydevd/python3.9/lib/python3.9/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.9 pip install --user pydevd-pycharm --no-warn-script-location
 
-FROM golang:1.14.1 as build
+FROM golang:1.17 as build
 COPY launcher/ .
 # Produce an as-static-as-possible wrapper binary to work on musl and glibc
 RUN GOPATH="" CGO_ENABLED=0 go build -o launcher -ldflags '-s -w -extldflags "-static"' .
