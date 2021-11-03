@@ -20,7 +20,7 @@ jobs:
     steps:
     - uses: actions/setup-go@v2
       with:
-        go-version: ^1.16
+        go-version: ^1.17
 
     - uses: actions/checkout@v2
       with:
@@ -40,7 +40,7 @@ jobs:
         curl -Lo $HOME/bin/skaffold https://storage.googleapis.com/skaffold/builds/latest/skaffold-linux-amd64
         curl -Lo $HOME/bin/container-structure-test https://storage.googleapis.com/container-structure-test/latest/container-structure-test-linux-amd64
         curl -Lo $HOME/bin/kind https://github.com/kubernetes-sigs/kind/releases/download/v0.11.1/kind-linux-amd64
-        curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.18.0/bin/linux/amd64/kubectl
+        curl -Lo $HOME/bin/kubectl https://storage.googleapis.com/kubernetes-release/release/v1.20.0/bin/linux/amd64/kubectl
         chmod +x $HOME/bin/*
         echo "$HOME/bin" >> $GITHUB_PATH
 

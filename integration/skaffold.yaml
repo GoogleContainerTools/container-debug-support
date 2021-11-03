@@ -20,9 +20,6 @@ profiles:
       artifacts:
       - image: kubectl
         context: kubectl
-        docker:
-          buildArgs:
-            GOVERSION: 1.16
     deploy:
       kubectl:
         manifests:
