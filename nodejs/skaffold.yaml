@@ -16,7 +16,7 @@ build:
   - image: skaffold-debug-nodejs
     context: helper-image
     custom:
-      buildCommand: ../../buildx.sh
+      buildCommand: ../../hack/buildx.sh
 
 test:
   - image: skaffold-debug-nodejs
