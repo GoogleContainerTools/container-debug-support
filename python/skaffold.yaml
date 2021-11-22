@@ -43,6 +43,24 @@ profiles:
 
   # integration: set of `skaffold debug`-like integration tests
   - name: integration
+    patches:
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: python39app
+          context: test/pythonapp
+          docker:
+            buildArgs:
+              PYTHONVERSION: "3.9"
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: pydevconnect
+          context: test/pydevconnect
+    deploy:
+      kubectl:
+        manifests:
+          - test/k8s-test-pydevd-python39.yaml
 
   # release: pushes images to production with :latest
   - name: release
