@@ -49,3 +49,26 @@ form produced by `skaffold debug`.  To run:
 ```sh
 sh run-its.sh
 ```
+
+# Staging and Deploying
+
+To stage a set of images for testing use the following command,
+where `$REPO` is the image repository where you plan to host the
+images.
+```sh
+skaffold build -p release,deprecated-names --default-repo $REPO
+```
+
+The `release` profile causes the images to be pushed to the specified
+repository and also enables multi-arch builds using buildx (default
+linux/amd64 and linux/arm64).  The `deprecated-names` profile enables
+using the short-form image names (`go`, `netcore`, `nodejs`, `python`)
+which we intend to move away from.
+
+Then configure Skaffold to point to that location:
+```sh
+skaffold config set --global debug-helpers-registry $REPO
+```
+
+You should then be able to use `skaffold debug` and use the
+staged images.
