@@ -14,9 +14,9 @@
 
 # This Dockerfile creates a debug helper base image for Python.
 # It provides installations of debugpy, ptvsd, pydevd, and pydevd-pycharm
-# for Python 2.7, 3.5, 3.6, 3.7, 3.8, and 3.9.
+# for Python 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10.
 #   - Apache Beam is based around Python 3.5
-#   - Many ML/NLP images are based on Python 3.6
+#   - Many ML/NLP images are based on Python 3.5 and 3.6
 #
 # debugpy and ptvsd are well-structured packages installed in separate
 # directories under # /dbg/python/lib/pythonX.Y/site-packages and
@@ -69,15 +69,26 @@ COPY pydevd.patch .
 RUN patch -p0 -d /dbgpy/pydevd/python3.9/lib/python3.9/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.9 pip install --user pydevd-pycharm --no-warn-script-location
 
-FROM golang:1.17 as build
+FROM python:3.10 as python3_10
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.10 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.10/lib/python3.10/site-packages < pydevd.patch
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.10 pip install --user pydevd-pycharm --no-warn-script-location
+
+FROM --platform=$BUILDPLATFORM golang:1.17 as build
+ARG BUILDPLATFORM
+ARG TARGETOS
+ARG TARGETARCH
 COPY launcher/ .
 # Produce an as-static-as-possible wrapper binary to work on musl and glibc
-RUN GOPATH="" CGO_ENABLED=0 go build -o launcher -ldflags '-s -w -extldflags "-static"' .
+RUN GOPATH="" CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH \
+  go build -o launcher -ldflags '-s -w -extldflags "-static"' .
 
 # Now populate the duct-tape image with the language runtime debugging support files
 # The debian image is about 95MB bigger
-FROM busybox
-ARG BUILDPLATFORM
+FROM --platform=$TARGETPLATFORM busybox
+ARG TARGETPLATFORM
 
 # The install script copies all files in /duct-tape to /dbg
 COPY install.sh /
@@ -89,4 +100,5 @@ COPY --from=python36 /dbgpy/ python/
 COPY --from=python37 /dbgpy/ python/
 COPY --from=python38 /dbgpy/ python/
 COPY --from=python39 /dbgpy/ python/
+COPY --from=python3_10 /dbgpy/ python/
 COPY --from=build /go/launcher python/

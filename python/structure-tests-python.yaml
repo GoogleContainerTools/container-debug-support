@@ -55,6 +55,15 @@ fileExistenceTests:
   - name: 'pydevd-pycharm for python 3.9'
     path: '/duct-tape/python/pydevd-pycharm/python3.9/lib/python3.9/site-packages/pydevd.py'
 
+  - name: 'ptvsd for python 3.10'
+    path: '/duct-tape/python/lib/python3.10/site-packages/ptvsd/__init__.py'
+  - name: 'debugpy for python 3.10'
+    path: '/duct-tape/python/lib/python3.10/site-packages/debugpy/__init__.py'
+  - name: 'pydevd for python 3.10'
+    path: '/duct-tape/python/pydevd/python3.10/lib/python3.10/site-packages/pydevd.py'
+  - name: 'pydevd-pycharm for python 3.10'
+    path: '/duct-tape/python/pydevd-pycharm/python3.10/lib/python3.10/site-packages/pydevd.py'
+
   - name: 'python launcher'
     path: '/duct-tape/python/launcher'
     isExecutableBy: any

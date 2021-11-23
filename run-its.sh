@@ -33,5 +33,5 @@ while [ $jobcount -eq 0 -o $jobcount -ne $(countTestJobs) ]; do
 done
 
 echo ">> Monitoring for test job completion [$(date)]"
-kubectl wait --for=condition=complete job.batch \
+kubectl wait --for=condition=complete job.batch --timeout=120s \
     -l project=container-debug-support,type=integration-test
