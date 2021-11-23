@@ -1,0 +1,77 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: python310pod
+  labels:
+    app: hello
+    protocol: pydevd
+    runtime: python310
+spec:
+  containers:
+  - name: python310app
+    image: python310app
+    command: ["/dbg/python/launcher", "--mode", "pydevd", "--port", "12345", "--"]
+    args: ["python", "-m", "flask", "run", "--host=0.0.0.0"]
+    ports:
+    - containerPort: 5000
+    - containerPort: 12345
+      name: pydevd
+    env:
+    - name: WRAPPER_VERBOSE
+      value: debug
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 5000
+    volumeMounts:
+    - mountPath: /dbg
+      name: python-debugging-support
+  initContainers:
+  - image: skaffold-debug-python
+    name: install-python-support
+    resources: {}
+    volumeMounts:
+    - mountPath: /dbg
+      name: python-debugging-support
+  volumes:
+  - emptyDir: {}
+    name: python-debugging-support
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-pydevd-python310
+spec:
+  ports:
+  - name: http
+    port: 5000
+    protocol: TCP
+  - name: pydevd
+    port: 12345
+    protocol: TCP
+  selector:
+    app: hello
+    protocol: pydevd
+    runtime: python310
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: connect-to-python310
+  labels:
+    project: container-debug-support
+    type: integration-test
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      containers:
+      - name: verify-python310
+        image: pydevconnect
+        args: ["hello-pydevd-python310:12345"]
+
+

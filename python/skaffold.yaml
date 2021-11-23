@@ -55,12 +55,21 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
+          image: python310app
+          context: test/pythonapp
+          docker:
+            buildArgs:
+              PYTHONVERSION: "3.10"
+      - op: add
+        path: /build/artifacts/-
+        value:
           image: pydevconnect
           context: test/pydevconnect
     deploy:
       kubectl:
         manifests:
           - test/k8s-test-pydevd-python39.yaml
+          - test/k8s-test-pydevd-python310.yaml
 
   # release: pushes images to production with :latest
   - name: release
