@@ -4,7 +4,7 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-ARG DELVE_VERSION=1.7.2
+ARG DELVE_VERSION=1.7.3
 
 # Patch delve to change default for --only-same-user to false
 # Required as `kubectl port-forward` to dlv port is refused.
@@ -15,8 +15,7 @@ RUN curl --location --output delve.tar.gz https://github.com/go-delve/delve/arch
   && tar xzf delve.tar.gz \
   && mv delve-$DELVE_VERSION delve-source
 COPY delve-*.patch .
-RUN patch -p0 -d delve-source < delve-only-same-user.patch \
-  && patch -p0 -d delve-source < delve-pr2684.patch
+RUN patch -p0 -d delve-source < delve-only-same-user.patch
 
 # Produce an as-static-as-possible dlv binary to work on musl and glibc
 RUN cd delve-source \
