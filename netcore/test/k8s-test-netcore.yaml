@@ -1,0 +1,46 @@
+# vsdbg is normally invoked via `kubectl exec` so there are no sockets
+# to test.  This test instead executes `vsdbg`, which speaks debug
+# adapter protocol on stdin/stdout, and verifies that it was able to 
+# launch with a "disconnect"
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: netcore-vsdbg-runs
+  labels:
+    project: container-debug-support
+    type: integration-test
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - image: skaffold-debug-netcore
+        name: install-netcore-support
+        resources: {}
+        volumeMounts:
+        - mountPath: /dbg
+          name: netcore-debugging-support
+      containers:
+      - name: netcore-vsdbg
+        image: ubuntu
+        args:
+          - sh
+          - -c
+          - |
+            printf 'Content-Length: 26\r\n\r\n{"command":"disconnect"}\r\n' | /dbg/netcore/vsdbg >/tmp/out
+            if egrep -q '("success":true.*"command":"disconnect"|"command":"disconnect".*"success":true)' /tmp/out; then
+              echo "Successfully started vsdbg"
+            else
+              echo "ERROR: unable to launch vsdbg"
+              cat /tmp/out
+              exit 1
+            fi
+        volumeMounts:
+        - mountPath: /dbg
+          name: netcore-debugging-support
+      volumes:
+      - emptyDir: {}
+        name: netcore-debugging-support
+
