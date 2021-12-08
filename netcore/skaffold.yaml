@@ -38,7 +38,10 @@ profiles:
 
   # integration: set of `skaffold debug`-like integration tests
   - name: integration
-    # No integration tests for netcore yet
+    deploy:
+      kubectl:
+        manifests:
+          - test/k8s-test-netcore.yaml
 
   # release: pushes images to production with :latest
   - name: release
