@@ -1,0 +1,81 @@
+# Stage container-debug-support images to the staging location ($_REPO) using
+# both long- and short-form names.  On a successful build, long- and short-form images
+# will be pushed to:
+#   - $_REPO/$SHORT_SHA tagged with `:latest`
+#   - $_REPO tagged with `:$SHORT_SHA` and `:latest`, replacing previously staged images
+#
+# To test:
+# $ env CLOUDSDK_CORE_PROJECT=bdealwis-playground \
+#    gcloud builds submit --config=hack/cloudbuild-staging.yaml \
+#    --substitutions=SHORT_SHA=999999,_REPO=us-central1-docker.pkg.dev/bdealwis-playground/junk/skaffold-debug-support .
+options:
+  machineType: 'N1_HIGHCPU_8'
+  env:
+  - DOCKER_CLI_EXPERIMENTAL=enabled
+
+substitutions:
+  _REPO: us-central1-docker.pkg.dev/k8s-skaffold/skaffold-staging/skaffold-debug-support
+  _RUNTIMES: go netcore nodejs python
+
+steps:
+  # Update buildx to 0.7.1 and configure docker for multi-platform builds with qemu 
+  - name: gcr.io/cloud-builders/gcloud
+    entrypoint: 'bash'
+    args:
+      - '-eEuo'
+      - 'pipefail'
+      - '-c'
+      - |-
+        mkdir -p $$HOME/.docker/cli-plugins
+        curl -sLo $$HOME/.docker/cli-plugins/docker-buildx https://github.com/docker/buildx/releases/download/v0.7.1/buildx-v0.7.1.linux-amd64
+        chmod +x $$HOME/.docker/cli-plugins/docker-buildx
+  - name: gcr.io/cloud-builders/docker
+    args: [info]
+  # Install tonistiigi's binfmt extensions for arm64 emulation <https://github.com/tonistiigi/binfmt>
+  - name: 'tonistiigi/binfmt@sha256:8de6f2decb92e9001d094534bf8a92880c175bd5dfb4a9d8579f26f09821cfa2' # qemu-6.1.0
+    args: [--install, "arm64"]
+
+  ###################################################################    
+  # Build the images to separate loction in $_REPO to allow easy testing with images from specific commit:
+  #   skaffold config set --global debug-helpers-registry $_REPO/$SHORT_SHA
+  - name: gcr.io/k8s-skaffold/skaffold
+    args: [skaffold, build, -p, release, --default-repo, $_REPO/$SHORT_SHA]
+  # Copy the images to the short-names for backwards compatibility.
+  # Ideally we would just re-invoke Skaffold which should push the just-built
+  # long-form images to the short-form names but that isn't working
+  # (https://github.com/GoogleContainerTools/skaffold/issues/6957).
+  - name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      for runtime in $_RUNTIMES; do
+        gcrane copy $_REPO/$SHORT_SHA/skaffold-debug-$$runtime:latest $_REPO/$SHORT_SHA/$$runtime:latest
+      done
+
+  ###################################################################    
+  # Stage the images into $_REPO
+  #
+  # First copy images into $_REPO using the $SHORT_SHA as tag
+  - name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      for runtime in $_RUNTIMES; do
+        gcrane copy $_REPO/$SHORT_SHA/skaffold-debug-$$runtime:latest $_REPO/skaffold-debug-$$runtime:$SHORT_SHA
+        gcrane copy $_REPO/$SHORT_SHA/$$runtime:latest $_REPO/$$runtime:$SHORT_SHA
+      done
+  # Then retag long- and short-forms as :latest
+  - name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      for runtime in $_RUNTIMES; do
+        gcrane tag $_REPO/skaffold-debug-$$runtime:$SHORT_SHA latest
+        gcrane tag $_REPO/$$runtime:$SHORT_SHA latest
+      done
+
+# amd64 + arm64 builds typically take about 15 minutes
+timeout: 1200s
