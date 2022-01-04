@@ -9,7 +9,7 @@
 #    gcloud builds submit --config=hack/cloudbuild-staging.yaml \
 #    --substitutions=SHORT_SHA=999999,_REPO=us-central1-docker.pkg.dev/bdealwis-playground/junk/skaffold-debug-support .
 options:
-  machineType: 'N1_HIGHCPU_8'
+  machineType: 'E2_HIGHCPU_8'
   env:
   - DOCKER_CLI_EXPERIMENTAL=enabled
 
