@@ -1,22 +1,27 @@
 ![experimental](https://img.shields.io/badge/stability-experimental-orange.svg)
 
-# Container Runtime Debugging Support (aka Duct Tape)
+# Container Runtime Debugging Support Images (aka Duct Tape)
 
-This repository gathers additional dependencies required to debug
-particular language runtimes with [`skaffold debug`](https://skaffold.dev/docs/how-tos/debug/). 
-These dependencies are packaged as a set of container images suitable
-for use as `initContainer`s on a pod.  When executed, a container image
-copies these dependencies to `/dbg/<runtimeId>`.
+This repository defines a set of container images that package
+the language runtime dependencies required to enable step-by-step
+debugging of apps with
+[`skaffold debug`](https://skaffold.dev/docs/how-tos/debug/). 
+These container images are suitable for use as `initContainer`s on
+a pod.  When executed, each container image copies these dependencies
+to `/dbg/<runtimeId>`.
 
 The idea is that `skaffold debug` will transform k8s manifests to
 make available any support files required to debug specific language
 runtimes.  For example, a Kubernetes podspec would be transformed to
 
-  - mount a volume on `/dbg` to hold the debugging support files
-  - run one or more of these `initContainer`s to populate the volume
-  - mount the volume on the applicable containers as `/dbg`
+  - create a volume to hold the debugging support files
+  - run one or more of these images as `initContainer`s to populate
+    this volume, mounted as `/dbg`
+  - mount this volume on the applicable containers as `/dbg`
+    with suitably transformed command-line in the entrypoint and arguments
 
 Current language runtimes:
+
   * `go`: provides [Delve](https://github.com/go-delve/delve)
   * `python`: provides [`ptvsd`](https://github.com/Microsoft/ptvsd),
     a debug adapter that can be used for VS Code and more, for
@@ -25,50 +30,26 @@ Current language runtimes:
     args to the application invokation
   * `netcore`: provides `vsdbg` for .NET Core
 
-## Development
+## Distribution
 
-This project uses Skaffold's multiple config support to allow
-developing for each language runtime separately.
+The latest released images, which are used by `skaffold debug`, are available at:
 
-Each language runtime is broken out to a separate directory
-with a `skaffold.yaml` for development of the `duct-tape` initContainer
-image.  Each image is expected to be standalone and not require
-downloading content across the network.  To add support for a new
-language runtime, an image definition should download the necessary
-files into the container image.  The image's entrypoint should then
-copy those files into place at `/dbg/<runtime>`.  The image should
-be added to the respective `skaffold.yaml` and referenced within
-`test/k8s-*-installation.yaml`.
+    gcr.io/k8s-skaffold/skaffold-debug-support
 
-# Testing
+Images from a particular release are available at:
 
-Integration tests are found in `test/`.  These tests build and
-launch applications as pods that are similar to the transformed
-form produced by `skaffold debug`.  To run:
+    gcr.io/k8s-skaffold/skaffold-debug-support/<release>
 
-```sh
-sh run-its.sh
-```
+Images from the latest commit to HEAD are available at our staging repository:
 
-# Staging and Deploying
+    us-central1-docker.pkg.dev/k8s-skaffold/skaffold-staging/skaffold-debug-support
 
-To stage a set of images for testing use the following command,
-where `$REPO` is the image repository where you plan to host the
-images.
-```sh
-skaffold build -p release,deprecated-names --default-repo $REPO
-```
+You can configure Skaffold to use a specific release or the staging
+repository with the following:
 
-The `release` profile causes the images to be pushed to the specified
-repository and also enables multi-arch builds using buildx (default
-linux/amd64 and linux/arm64).  The `deprecated-names` profile enables
-using the short-form image names (`go`, `netcore`, `nodejs`, `python`)
-which we intend to move away from.
+    skaffold config set --global debug-helpers-registry <repository>
 
-Then configure Skaffold to point to that location:
-```sh
-skaffold config set --global debug-helpers-registry $REPO
-```
 
-You should then be able to use `skaffold debug` and use the
-staged images.
+# Contributing
+
+See [CONTRIBUTING](CONTRIBUTING.md) for how to contribute!

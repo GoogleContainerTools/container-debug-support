@@ -1,0 +1,152 @@
+#
+# Use GitHub releases to promote container-debug-support images
+
+# We use GitHub release triggers to promote the images corresponding to
+# the release commit from staging ($_STAGING) to the production location ($_PROD).
+# Images are tagged with the $SHORT_SHA and $TAG_NAME where appropriate.
+#
+# Release tags ($TAG_NAME) are expected to follow a `vN.N` pattern and are
+# expected to be distinct.  The `vN` indicates a major version (e.g., v1.35 -> v1).
+# These release tags are generally expected to be distinct, such that they
+# shouldn't be overwritten by accident.
+# 
+# This promotion script copies the long- and short-form images to:
+#
+#   1. $_PROD/$TAG_NAME tagged with `latest` and `$SHORT_SHA`
+#      Users can then use a specific release with:
+#      ```
+#        skaffold config set --global debug-helpers-registry $_PROD/$TAG_NAME
+#      ```
+#   2. $_PROD/$MAJORVER tagged with `latest`, `$TAG_NAME`, and `$SHORT_SHA`,
+#      when $_IS_LATEST is true and $TAG_NAME has a valid major version
+#   3. $_PROD for backward compatibility, tagged with `latest`, `$TAG_NAME`, and `$SHORT_NAME`,
+#      when $_IS_LATEST is true and the major version is `v1`.
+#
+# For example, tagging commit 70f0f74 as v1.1 should result in the images being
+# copied over as:
+#
+#   1. gcr.io/k8s-skaffold/skaffold-debug-support/v1.1/<image>:{latest,70f0f74}
+#   2. gcr.io/k8s-skaffold/skaffold-debug-support/v1/<image>:{latest,v1.1,70f0f74}
+#   3. gcr.io/k8s-skaffold/skaffold-debug-support/<image>:{latest,v1.1,70f0f74}
+#
+# The last location (3) occurs because the major version is v1. This copy is to maintain
+# backwards compatibility with the existing versions of Skaffold.  When we bump the
+# major version to v2, we will no longer copy images into (3).
+#
+# To test:
+# $ export CLOUDSDK_CORE_PROJECT=bdealwis-playground
+# $ gcloud builds submit --config=hack/cloudbuild-promote.yaml \
+#    --substitutions=SHORT_SHA=999999,TAG_NAME=v1.23,_STAGING=us-central1-docker.pkg.dev/$CLOUDSDK_CORE_PROJECT/junk/skaffold-debug-support,_PROD=gcr.io/$CLOUDSDK_CORE_PROJECT/skaffold-debug-support
+#
+# To replace a previous release with rebuilt images:
+# $ gcloud builds submit --config=hack/cloudbuild-promote.yaml \
+#    --substitutions=SHORT_SHA=xxxx,TAG_NAME=v1.23,_STAGING=us-central1-docker.pkg.dev/$CLOUDSDK_CORE_PROJECT/junk/skaffold-debug-support,_PROD=gcr.io/$CLOUDSDK_CORE_PROJECT/skaffold-debug-support,_IS_LATEST=0
+#
+options:
+  #machineType: 'E2_HIGHCPU_8'
+
+substitutions:
+  _STAGING: us-central1-docker.pkg.dev/$PROJECT_ID/skaffold-staging/skaffold-debug-support
+  _PROD: gcr.io/$PROJECT_ID/skaffold-debug-support
+  _RUNTIMES: go netcore nodejs python
+  _IS_LATEST: "1"
+
+steps:
+  ###################################################################
+  # Validate that $TAG_NAME is an acceptable image component name and tag
+  # Regexs from https://github.com/opencontainers/distribution-spec/blob/main/spec.md
+  - id: validate-tag
+    name: bash
+    entrypoint: 'bash'
+    args:
+      - '-eEuo'
+      - 'pipefail'
+      - '-c'
+      - |-
+        if [[ "$TAG_NAME" =~ ^[a-z0-9]+([._-][a-z0-9]+)*$ ]] \
+            && [[ "$TAG_NAME" =~ ^[a-zA-Z0-9_][a-zA-Z0-9._-]{0,127}$ ]]; then
+          echo "Accepted tag"
+        else
+          echo "Release tag [$TAG_NAME] is not a valid image name component or image tag"
+          exit 1
+        fi
+  
+  ###################################################################
+  # Copy the staged images to release loction in $_PROD/$TAG_NAME.
+  # This allows users to use a specific release with:
+  #   skaffold config set --global debug-helpers-registry $_PROD/$TAG_NAME
+  #
+  # First copy staged images into $_PROD/$TAG_NAME tagged with $SHORT_SHA.  
+  # If this step fails, then nothing irrevocable has occurred.
+  - id: install-release-images
+    name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      for runtime in $_RUNTIMES; do
+        gcrane copy $_STAGING/$SHORT_SHA/skaffold-debug-$$runtime:latest $_PROD/$TAG_NAME/skaffold-debug-$$runtime:$SHORT_SHA
+        gcrane copy $_STAGING/$SHORT_SHA/$$runtime:latest $_PROD/$TAG_NAME/$$runtime:$SHORT_SHA
+      done
+  # Then install these images by tagging them with `latest`.
+  - id: promote-release-images
+    name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      for runtime in $_RUNTIMES; do
+        gcrane tag $_PROD/$TAG_NAME/skaffold-debug-$$runtime:$SHORT_SHA latest
+        gcrane tag $_PROD/$TAG_NAME/$$runtime:$SHORT_SHA latest
+      done
+      echo "Images promoted to $_PROD/$TAG_NAME"
+  
+  # Promote to major version (e.g., v1.35 -> v1).
+  # If IS_LATEST=1 copy these tagged images into latest.
+  - id: promote-to-major-version
+    name: gcr.io/go-containerregistry/gcrane:debug
+    entrypoint: /busybox/sh
+    args:
+    - "-euc"
+    - |-
+      MAJORVER=$$(echo $TAG_NAME | sed -n 's/\(v[0-9][0-9]\)*\.[0-9.]*/\1/p')
+      if [ -z "$$MAJORVER" ]; then
+      	echo "Skipping rest of promotion: Release tag [${TAG_NAME}] does not have [vN.*] major version"
+      	exit 0
+      fi
+
+      for runtime in $_RUNTIMES; do
+        gcrane copy $_STAGING/$SHORT_SHA/skaffold-debug-$$runtime:latest $_PROD/$$MAJORVER/skaffold-debug-$$runtime:$SHORT_SHA
+        gcrane copy $_STAGING/$SHORT_SHA/$$runtime:latest $_PROD/$$MAJORVER/$$runtime:$SHORT_SHA
+        if [ "$$MAJORVER" = v1 ]; then
+          gcrane copy $_STAGING/$SHORT_SHA/skaffold-debug-$$runtime:latest $_PROD/skaffold-debug-$$runtime:$SHORT_SHA
+          gcrane copy $_STAGING/$SHORT_SHA/$$runtime:latest $_PROD/$$runtime:$SHORT_SHA
+        fi
+      done
+      for runtime in $_RUNTIMES; do
+        gcrane tag $_PROD/$$MAJORVER/skaffold-debug-$$runtime:$SHORT_SHA $TAG_NAME
+        gcrane tag $_PROD/$$MAJORVER/$$runtime:$SHORT_SHA $TAG_NAME
+        if [ "$$MAJORVER" = v1 ]; then
+          gcrane tag $_PROD/skaffold-debug-$$runtime:$SHORT_SHA $TAG_NAME
+          gcrane tag $_PROD/$$runtime:$SHORT_SHA $TAG_NAME
+        fi
+      done
+      case "$_IS_LATEST" in
+      0|no|NO|false|FALSE) echo "skipping promotion to latest as _IS_LATEST=${_IS_LATEST}"; exit 0;;
+      esac
+      
+      for runtime in $_RUNTIMES; do
+        gcrane tag $_PROD/$$MAJORVER/skaffold-debug-$$runtime:$SHORT_SHA latest
+        gcrane tag $_PROD/$$MAJORVER/$$runtime:$SHORT_SHA latest
+      done
+      echo "Images promoted to $_PROD/$$MAJORVER as latest"
+
+      if [ "$$MAJORVER" = v1 ]; then
+        for runtime in $_RUNTIMES; do
+          gcrane tag $_PROD/skaffold-debug-$$runtime:$SHORT_SHA latest
+          gcrane tag $_PROD/$$runtime:$SHORT_SHA latest
+        done
+        echo "Images promoted to $_PROD as latest"
+      fi
+
+timeout: 200s
