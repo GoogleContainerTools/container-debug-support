@@ -4,7 +4,7 @@ ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-ARG DELVE_VERSION=1.7.3
+ARG DELVE_VERSION=1.8.0
 
 # Patch delve to make defaults for --check-go-version and --only-same-user
 # to be set at build time.  We must install patch(1) to apply the patch.
