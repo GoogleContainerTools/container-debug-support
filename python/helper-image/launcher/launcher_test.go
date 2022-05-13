@@ -253,6 +253,20 @@ func TestPrepare(t *testing.T) {
 			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
 		},
 		{
+			description: "debugpy with module",
+			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "-m", "gunicorn", "app:app"}, env: nil},
+			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
+				AndRunCmd([]string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}),
+			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "debugpy", "--listen", "2345", "-m", "gunicorn", "app:app"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+		},
+		{
+			description: "debugpy with module (no space)",
+			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: false, args: []string{"python", "-mgunicorn", "app:app"}, env: nil},
+			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").
+				AndRunCmd([]string{"python", "-m", "debugpy", "--listen", "2345", "app.py"}),
+			expected: pythonContext{debugMode: "debugpy", port: 2345, wait: false, major: 3, minor: 7, args: []string{"python", "-m", "debugpy", "--listen", "2345", "-m", "gunicorn", "app:app"}, env: env{"PYTHONPATH": dbgRoot + "/python/lib/python3.7/site-packages"}},
+		},
+		{
 			description: "debugpy with wait",
 			pc:          pythonContext{debugMode: "debugpy", port: 2345, wait: true, args: []string{"python", "app.py"}, env: nil},
 			commands: RunCmdOut([]string{"python", "-V"}, "Python 3.7.4\n").

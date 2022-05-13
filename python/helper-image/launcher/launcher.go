@@ -350,6 +350,7 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 }
 
 func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
+	// TODO(#76): we're assuming the `-m module` argument comes first
 	var cmdline []string
 	switch pc.debugMode {
 	case ModePtvsd:
@@ -367,7 +368,14 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 		if pc.wait {
 			cmdline = append(cmdline, "--wait-for-client")
 		}
-		cmdline = append(cmdline, pc.args[1:]...)
+		// debugpy expects the `-m` module argument to be separate
+		for i, arg := range pc.args[1:] {
+			if i == 0 && arg != "-m" && strings.HasPrefix(arg, "-m") {
+				cmdline = append(cmdline, "-m", strings.TrimPrefix(arg, "-m"))			
+			} else {				
+				cmdline = append(cmdline, arg)
+			}
+		}
 		pc.args = cmdline
 
 	case ModePydevd, ModePydevdPycharm:
