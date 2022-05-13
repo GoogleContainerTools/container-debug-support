@@ -350,6 +350,7 @@ func (pc *pythonContext) updateEnv(ctx context.Context) error {
 }
 
 func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
+	// TODO(#76): we're assuming the `-m module` argument comes first
 	var cmdline []string
 	switch pc.debugMode {
 	case ModePtvsd:
