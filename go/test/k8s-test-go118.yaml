@@ -1,0 +1,91 @@
+# This test approximates `skaffold debug` for a go app.
+apiVersion: v1
+kind: Pod
+metadata:
+  name: go118pod
+  labels:
+    app: hello
+    protocol: dlv
+    runtime: go118
+spec:
+  containers:
+  - name: go118app
+    image: go118app
+    args:
+    - /dbg/go/bin/dlv
+    - exec
+    - --log
+    - --headless
+    - --continue
+    - --accept-multiclient
+    # listen on 0.0.0.0 as it is exposed as a service
+    - --listen=0.0.0.0:56286
+    - --api-version=2
+    - ./app
+    ports:
+    - containerPort: 8080
+    - containerPort: 56286
+      name: dlv
+    readinessProbe:
+      httpGet:
+        path: /
+        port: 8080
+    volumeMounts:
+    - mountPath: /dbg
+      name: go-debugging-support
+  initContainers:
+  - image: skaffold-debug-go
+    name: install-go-support
+    resources: {}
+    volumeMounts:
+    - mountPath: /dbg
+      name: go-debugging-support
+  volumes:
+  - emptyDir: {}
+    name: go-debugging-support
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: hello-dlv-go118
+spec:
+  ports:
+  - name: http
+    port: 8080
+    protocol: TCP
+  - name: dlv
+    port: 56286
+    protocol: TCP
+  selector:
+    app: hello
+    protocol: dlv
+    runtime: go118
+
+---
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: connect-to-go118
+  labels:
+    project: container-debug-support
+    type: integration-test
+spec:
+  ttlSecondsAfterFinished: 10
+  backoffLimit: 1
+  template:
+    spec:
+      restartPolicy: Never
+      initContainers:
+      - name: wait-for-go118pod
+        image: kubectl
+        command: [sh, -c, "while ! curl -s hello-dlv-go118:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
+      containers:
+      - name: dlv-to-go118
+        image: skaffold-debug-go
+        command: [sh, -c, '
+          (echo bt; echo exit -c) > init.txt;
+          set -x;
+          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go118:56286']
+
+
