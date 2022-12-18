@@ -14,12 +14,12 @@
 
 # This Dockerfile creates a debug helper base image for Python.
 # It provides installations of debugpy, ptvsd, pydevd, and pydevd-pycharm
-# for Python 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10.
+# for Python 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, and 3.11.
 #   - Apache Beam is based around Python 3.5
 #   - Many ML/NLP images are based on Python 3.5 and 3.6
 #
 # debugpy and ptvsd are well-structured packages installed in separate
-# directories under # /dbg/python/lib/pythonX.Y/site-packages and
+# directories under # /dbg/python/lib/pythonX.Y/site-packages
 # that do not interfere with each other.
 #
 # pydevd and pydevd-pycharm install a script in .../bin and both install
@@ -29,14 +29,14 @@
 
 FROM python:2.7 as python27
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
-RUN PYTHONUSERBASE=/dbgpy/pydevd/python2.7 pip install --user pydevd --no-warn-script-location
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python2.7 pip install --user pydevd==2.8.0 --no-warn-script-location
 COPY pydevd.patch .
 RUN patch -p0 -d /dbgpy/pydevd/python2.7/lib/python2.7/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python2.7 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM python:3.5 as python35
 RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
-RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.5 pip install --user pydevd --no-warn-script-location
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.5 pip install --user pydevd==2.8.0 --no-warn-script-location
 COPY pydevd.patch .
 RUN patch -p0 -d /dbgpy/pydevd/python3.5/lib/python3.5/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.5 pip install --user pydevd-pycharm --no-warn-script-location
@@ -76,6 +76,14 @@ COPY pydevd.patch .
 RUN patch -p0 -d /dbgpy/pydevd/python3.10/lib/python3.10/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.10 pip install --user pydevd-pycharm --no-warn-script-location
 
+FROM python:3.11 as python3_11
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.11 pip install --user pydevd --no-warn-script-location
+COPY pydevd.patch .
+RUN patch -p0 -d /dbgpy/pydevd/python3.11/lib/python3.11/site-packages < pydevd.patch
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.11 pip install --user pydevd-pycharm --no-warn-script-location
+
+
 FROM --platform=$BUILDPLATFORM golang:1.17 as build
 ARG BUILDPLATFORM
 ARG TARGETOS
@@ -101,4 +109,5 @@ COPY --from=python37 /dbgpy/ python/
 COPY --from=python38 /dbgpy/ python/
 COPY --from=python39 /dbgpy/ python/
 COPY --from=python3_10 /dbgpy/ python/
+COPY --from=python3_11 /dbgpy/ python/
 COPY --from=build /go/launcher python/
