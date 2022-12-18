@@ -14,7 +14,7 @@
 
 # This Dockerfile creates a debug helper base image for Python.
 # It provides installations of debugpy, ptvsd, pydevd, and pydevd-pycharm
-# for Python 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, and 3.10.
+# for Python 2.7, 3.5, 3.6, 3.7, 3.8, 3.9, 3.10, and 3.11.
 #   - Apache Beam is based around Python 3.5
 #   - Many ML/NLP images are based on Python 3.5 and 3.6
 #
@@ -75,6 +75,13 @@ RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.10 pip install --user pydevd==2.9.5 --n
 COPY pydevd_2_9_5.patch ./pydevd.patch
 RUN patch --binary -p0 -d /dbgpy/pydevd/python3.10/lib/python3.10/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.10 pip install --user pydevd-pycharm --no-warn-script-location
+
+FROM python:3.11 as python3_11
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.11 pip install --user pydevd==2.9.5 --no-warn-script-location
+COPY pydevd_2_9_5.patch ./pydevd.patch
+RUN patch --binary -p0 -d /dbgpy/pydevd/python3.11/lib/python3.11/site-packages < pydevd.patch
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.11 pip install --user pydevd-pycharm --no-warn-script-location
 
 FROM --platform=$BUILDPLATFORM golang:1.17 as build
 ARG BUILDPLATFORM
