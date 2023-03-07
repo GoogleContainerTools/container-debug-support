@@ -94,6 +94,14 @@ profiles:
           docker:
             buildArgs:
               GOVERSION: 1.19
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: go120app
+          context: test/goapp
+          docker:
+            buildArgs:
+              GOVERSION: 1.20
     deploy:
       kubectl:
         manifests:
