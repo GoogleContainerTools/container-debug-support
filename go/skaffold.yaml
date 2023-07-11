@@ -41,46 +41,6 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
-          image: go113app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.13
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go114app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.14
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go115app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.15
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go116app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.16
-      - op: add
-        path: /build/artifacts/-
-        value:
-          image: go117app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.17
-      - op: add
-        path: /build/artifacts/-
-        value:
           image: go118app
           context: test/goapp
           docker:
@@ -105,11 +65,6 @@ profiles:
     deploy:
       kubectl:
         manifests:
-          - test/k8s-test-go113.yaml
-          - test/k8s-test-go114.yaml
-          - test/k8s-test-go115.yaml
-          - test/k8s-test-go116.yaml
-          - test/k8s-test-go117.yaml
           - test/k8s-test-go118.yaml
           - test/k8s-test-go119.yaml
           - test/k8s-test-go120.yaml
