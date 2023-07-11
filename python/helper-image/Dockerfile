@@ -76,6 +76,13 @@ COPY pydevd_2_9_5.patch ./pydevd.patch
 RUN patch --binary -p0 -d /dbgpy/pydevd/python3.10/lib/python3.10/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.10 pip install --user pydevd-pycharm --no-warn-script-location
 
+FROM python:3.11 as python3_11
+RUN PYTHONUSERBASE=/dbgpy pip install --user ptvsd debugpy
+RUN PYTHONUSERBASE=/dbgpy/pydevd/python3.11 pip install --user pydevd==2.9.5 --no-warn-script-location
+COPY pydevd_2_9_5.patch ./pydevd.patch
+RUN patch --binary -p0 -d /dbgpy/pydevd/python3.11/lib/python3.11/site-packages < pydevd.patch
+RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.11 pip install --user pydevd-pycharm --no-warn-script-location
+
 FROM --platform=$BUILDPLATFORM golang:1.17 as build
 ARG BUILDPLATFORM
 ARG TARGETOS
@@ -101,4 +108,5 @@ COPY --from=python37 /dbgpy/ python/
 COPY --from=python38 /dbgpy/ python/
 COPY --from=python39 /dbgpy/ python/
 COPY --from=python3_10 /dbgpy/ python/
+COPY --from=python3_11 /dbgpy/ python/
 COPY --from=build /go/launcher python/

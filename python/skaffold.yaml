@@ -55,11 +55,19 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
-          image: python310app
+          image: python3_10app
           context: test/pythonapp
           docker:
             buildArgs:
               PYTHONVERSION: "3.10"
+      - op: add
+        path: /build/artifacts/-
+        value:
+          image: python3_11app
+          context: test/pythonapp
+          docker:
+            buildArgs:
+              PYTHONVERSION: "3.11"
       - op: add
         path: /build/artifacts/-
         value:
@@ -69,7 +77,8 @@ profiles:
       kubectl:
         manifests:
           - test/k8s-test-pydevd-python39.yaml
-          - test/k8s-test-pydevd-python310.yaml
+          - test/k8s-test-pydevd-python3_10.yaml
+          - test/k8s-test-pydevd-python3_11.yaml
 
   # release: pushes images to production with :latest
   - name: release
