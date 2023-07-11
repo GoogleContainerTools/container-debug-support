@@ -5,7 +5,7 @@ ARG TARGETOS
 ARG TARGETARCH
 
 COPY main.go .
-RUN GOOS=$TARGETOS GOARCH=$TARGETARCH go build -gcflags="all=-N -l" -o /app main.go
+RUN CGO_ENABLED=0 GOOS=$TARGETOS GOARCH=$TARGETARCH go build -gcflags="all=-N -l" -o /app main.go
 
 FROM --platform=$BUILDPLATFORM gcr.io/distroless/base
 CMD ["./app"]
