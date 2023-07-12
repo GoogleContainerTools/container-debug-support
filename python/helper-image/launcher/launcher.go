@@ -41,8 +41,8 @@ limitations under the License.
 //
 // This launcher is expected to be invoked as follows:
 //
-//    launcher --mode <pydevd|pydevd-pycharm|debugpy|ptvsd> \
-//        --port p [--wait] -- original-command-line ...
+//	launcher --mode <pydevd|pydevd-pycharm|debugpy|ptvsd> \
+//	    --port p [--wait] -- original-command-line ...
 //
 // This launcher determines the python executable based on
 // `original-command-line`, unwrapping any python scripts, and
@@ -65,22 +65,24 @@ limitations under the License.
 // ```
 // and will then invoke:
 // ```
-// python -m pydevd --server --port 5678 --DEBUG --continue \
-//   --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
+//
+//	python -m pydevd --server --port 5678 --continue \
+//	  --file /tmp/pydevd716531212/skaffold_pydevd_launch.py
+//
 // ```
 //
 // The launcher can be configured through several environment
 // variables:
 //
-// - Set `WRAPPER_ENABLED=false` to disable the launcher: the
-//   launcher will execute the original-command-line as-is.
-// - Set `WRAPPER_SKIP_ENV=true` to avoid setting PYTHONPATH
-//   to point to bundled debugging backends: this is useful if
-//   your app already includes `debugpy`.
-// - Set `WRAPPER_PYTHON_VERSION=3.9` to avoid trying to determine
-//   the python version by executing `python -V`
-// - Set `WRAPPER_VERBOSE` to one of `error`, `warn`, `info`, `debug`,
-//   or `trace` to reduce or increase the verbosity
+//   - Set `WRAPPER_ENABLED=false` to disable the launcher: the
+//     launcher will execute the original-command-line as-is.
+//   - Set `WRAPPER_SKIP_ENV=true` to avoid setting PYTHONPATH
+//     to point to bundled debugging backends: this is useful if
+//     your app already includes `debugpy`.
+//   - Set `WRAPPER_PYTHON_VERSION=3.9` to avoid trying to determine
+//     the python version by executing `python -V`
+//   - Set `WRAPPER_VERBOSE` to one of `error`, `warn`, `info`, `debug`,
+//     or `trace` to reduce or increase the verbosity
 package main
 
 import (
@@ -371,8 +373,8 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 		// debugpy expects the `-m` module argument to be separate
 		for i, arg := range pc.args[1:] {
 			if i == 0 && arg != "-m" && strings.HasPrefix(arg, "-m") {
-				cmdline = append(cmdline, "-m", strings.TrimPrefix(arg, "-m"))			
-			} else {				
+				cmdline = append(cmdline, "-m", strings.TrimPrefix(arg, "-m"))
+			} else {
 				cmdline = append(cmdline, arg)
 			}
 		}
@@ -382,9 +384,6 @@ func (pc *pythonContext) updateCommandLine(ctx context.Context) error {
 		// Appropriate location to resolve pydevd is set in updateEnv
 		cmdline = append(cmdline, pc.args[0])
 		cmdline = append(cmdline, "-m", "pydevd", "--server", "--port", strconv.Itoa(int(pc.port)))
-		if pc.env["WRAPPER_VERBOSE"] != "" {
-			cmdline = append(cmdline, "--DEBUG")
-		}
 		if !pc.wait {
 			cmdline = append(cmdline, "--continue")
 		}
