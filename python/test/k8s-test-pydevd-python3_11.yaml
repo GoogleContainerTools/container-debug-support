@@ -1,15 +1,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: python310pod
+  name: python3-11pod
   labels:
     app: hello
     protocol: pydevd
-    runtime: python310
+    runtime: python3_11
 spec:
   containers:
-  - name: python310app
-    image: python310app
+  - name: python3-11app
+    image: python3_11app
     command: ["/dbg/python/launcher", "--mode", "pydevd", "--port", "12345", "--"]
     args: ["python", "-m", "flask", "run", "--host=0.0.0.0"]
     ports:
@@ -41,7 +41,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-pydevd-python310
+  name: hello-pydevd-python3-11
 spec:
   ports:
   - name: http
@@ -53,13 +53,13 @@ spec:
   selector:
     app: hello
     protocol: pydevd
-    runtime: python310
+    runtime: python3_11
 
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: connect-to-python310
+  name: connect-to-python3-11
   labels:
     project: container-debug-support
     type: integration-test
@@ -70,8 +70,8 @@ spec:
     spec:
       restartPolicy: Never
       containers:
-      - name: verify-python310
+      - name: verify-python3-11
         image: pydevconnect
-        args: ["hello-pydevd-python310:12345"]
+        args: ["hello-pydevd-python3-11:12345"]
 
 
