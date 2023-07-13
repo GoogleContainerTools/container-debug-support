@@ -8,7 +8,8 @@
     "development": "nodemon src/index.js"
   },
   "dependencies": {
-    "express": "^4.16.4"
+    "express": "^4.16.4",
+    "semver": "^7.5.4"
   },
   "devDependencies": {
     "nodemon": "^2.0.3"
