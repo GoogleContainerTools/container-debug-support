@@ -41,14 +41,6 @@ profiles:
       - op: add
         path: /build/artifacts/-
         value:
-          image: go118app
-          context: test/goapp
-          docker:
-            buildArgs:
-              GOVERSION: 1.18
-      - op: add
-        path: /build/artifacts/-
-        value:
           image: go119app
           context: test/goapp
           docker:
@@ -65,7 +57,6 @@ profiles:
     deploy:
       kubectl:
         manifests:
-          - test/k8s-test-go118.yaml
           - test/k8s-test-go119.yaml
           - test/k8s-test-go120.yaml
 
