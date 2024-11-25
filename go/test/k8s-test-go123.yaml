@@ -2,15 +2,15 @@
 apiVersion: v1
 kind: Pod
 metadata:
-  name: go115pod
+  name: go123pod
   labels:
     app: hello
     protocol: dlv
-    runtime: go115
+    runtime: go123
 spec:
   containers:
-  - name: go115app
-    image: go115app
+  - name: go123app
+    image: go123app
     args:
     - /dbg/go/bin/dlv
     - exec
@@ -48,7 +48,7 @@ spec:
 apiVersion: v1
 kind: Service
 metadata:
-  name: hello-dlv-go115
+  name: hello-dlv-go123
 spec:
   ports:
   - name: http
@@ -60,13 +60,13 @@ spec:
   selector:
     app: hello
     protocol: dlv
-    runtime: go115
+    runtime: go123
 
 ---
 apiVersion: batch/v1
 kind: Job
 metadata:
-  name: connect-to-go115
+  name: connect-to-go123
   labels:
     project: container-debug-support
     type: integration-test
@@ -77,15 +77,13 @@ spec:
     spec:
       restartPolicy: Never
       initContainers:
-      - name: wait-for-go115pod
+      - name: wait-for-go123
         image: kubectl
-        command: [sh, -c, "while ! curl -s hello-dlv-go115:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
+        command: [sh, -c, "while ! curl -s hello-dlv-go123:8080 2>/dev/null; do echo waiting for app; sleep 1; done"]
       containers:
-      - name: dlv-to-go115
+      - name: dlv-to-go123
         image: skaffold-debug-go
         command: [sh, -c, '
           (echo bt; echo exit -c) > init.txt;
           set -x;
-          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go115:56286']
-
-
+          /duct-tape/go/bin/dlv connect --init init.txt hello-dlv-go123:56286']
