@@ -83,7 +83,7 @@ COPY pydevd_2_9_5.patch ./pydevd.patch
 RUN patch --binary -p0 -d /dbgpy/pydevd/python3.11/lib/python3.11/site-packages < pydevd.patch
 RUN PYTHONUSERBASE=/dbgpy/pydevd-pycharm/python3.11 pip install --user pydevd-pycharm --no-warn-script-location
 
-FROM --platform=$BUILDPLATFORM golang:1.17 as build
+FROM --platform=$BUILDPLATFORM golang:1.23 as build
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH

@@ -15,7 +15,7 @@
 # This Dockerfile creates a test image for verifying that pydevd is
 # running somewhere.
 
-FROM golang:1.17 as build
+FROM golang:1.23 as build
 COPY . .
 RUN CGO_ENABLED=0 go build -o pydevconnect -ldflags '-s -w -extldflags "-static"' pydevconnect.go
 
