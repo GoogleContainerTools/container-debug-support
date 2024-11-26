@@ -78,4 +78,4 @@ steps:
       done
 
 # amd64 + arm64 builds typically take about 15 minutes
-timeout: 1200s
+timeout: 1800s
