@@ -1,10 +1,10 @@
-ARG GOVERSION=1.23
+ARG GOVERSION=1.24
 FROM --platform=$BUILDPLATFORM golang:${GOVERSION} AS delve
 ARG BUILDPLATFORM
 ARG TARGETOS
 ARG TARGETARCH
 
-ARG DELVE_VERSION=1.23.1
+ARG DELVE_VERSION=1.24.1
 
 # Patch delve to make defaults for --check-go-version and --only-same-user
 # to be set at build time.  We must install patch(1) to apply the patch.
