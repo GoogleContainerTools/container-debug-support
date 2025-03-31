@@ -2,7 +2,7 @@ FROM --platform=$BUILDPLATFORM curlimages/curl as netcore
 ARG BUILDPLATFORM
 ARG TARGETPLATFORM
 # assume glibc; RuntimeIDs gleaned from the getvsdbgsh script
-RUN RuntimeID=$(case "$TARGETPLATFORM" in linux/amd64) echo linux-x64;; linux/arm64) echo linux-arm64;; *) exit 1;; esac); \
+RUN RuntimeID=$(case "$TARGETPLATFORM" in linux/amd64) echo linux-musl-x64;; linux/arm64) echo linux-arm64;; *) exit 1;; esac); \
  mkdir $HOME/vsdbg && curl -sSL https://aka.ms/getvsdbgsh | sh /dev/stdin -v latest -l $HOME/vsdbg -r $RuntimeID
 
 # Now populate the duct-tape image with the language runtime debugging support files
