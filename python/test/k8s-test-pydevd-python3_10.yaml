@@ -64,7 +64,7 @@ metadata:
     project: container-debug-support
     type: integration-test
 spec:
-  ttlSecondsAfterFinished: 10
+  ttlSecondsAfterFinished: 600
   backoffLimit: 1
   template:
     spec:
